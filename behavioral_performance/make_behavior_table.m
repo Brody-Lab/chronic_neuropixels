@@ -1,4 +1,6 @@
-% MAKE_BEHAVIOR_TABLE 
+% MAKE_BEHAVIOR_TABLE Make a CSV table with information on the sessions
+% used for measuring performance, including session ID, date, rat name,
+% whether the rat was tethered for recording
 function [] = make_behavior_table()
     add_folders_to_path;
     P = get_parameters;
@@ -6,6 +8,7 @@ function [] = make_behavior_table()
     T = struct;
     T.sessid=[];
     T.rat="";
+    T.date = datetime.empty;
     Rec_sess = readtable(P.recording_sessions_path);
     for i = 1:numel(Rat_info.rat_name)
         dates_tethered = [];
@@ -47,9 +50,31 @@ function [] = make_behavior_table()
     writetable(T, P.behavior_table_path);
 end
 
+%% ADD_TO_TABLE
+% add dates to a tabular structure
+%=INPUT
+%   T
+%       A structure in a tabular form
+%
+%   rat_name
+%       A char or string, does not have to match the number of elements of
+%       DATES
+%
+%   dates
+%       A DATETIME array
+%
+%   sessid
+%       A numeric array specifying session ID's
+%
+%=OUTPUT
+%   T
+%       The tabular structure after new elements have been added
 function T = add_to_table(T, dates, rat, sessid, tethered)
     dates = datetime(dates, 'format', 'yyyy-MM-dd');
-    inds = numel(T.sessid)+1:numel(T.sessid)+numel(sessid);
+    if numel(dates)~=numel(sessid)
+        error('DATES and SESSID have different numbers of elements')
+    end
+    inds = numel(T.date)+1:numel(T.date)+numel(dates);
     T.rat(inds,1) = string(rat);
     T.date(inds,1) = dates;
     T.sessid(inds,1) = sessid;

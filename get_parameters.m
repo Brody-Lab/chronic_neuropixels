@@ -12,3 +12,5 @@ P.rat_info_path = [P.repository_path filesep 'behavioral_performance' filesep 'r
 P.behavior_table_path = [P.repository_path filesep 'behavioral_performance' filesep 'behavior_table.csv'];
 P.recording_sessions_path = [P.repository_path filesep 'behavioral_performance' filesep 'recording_sessions.csv'];
 P.tzluo_path = [fileparts(P.repository_path) filesep 'tzluo'];
+P.performance_by_session_path = [P.repository_path filesep 'behavioral_performance' filesep 'performance_by_session.csv'];
+
