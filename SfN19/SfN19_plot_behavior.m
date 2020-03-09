@@ -9,26 +9,6 @@ script_name = mfilename;
 % I am excluding T170, T182, T196, and T209 because their behavioral
 % performance degraded severely after the surgery
 
-%T170
-% Again, excluded because his performance never quite recovered
-% s = struct;
-% s.date = {'2018-04-12'; ...
-%           '2018-04-13'; ...
-%           '2018-04-16'; ...
-%           '2018-04-17'; ...
-%           '2018-04-20'};
-% s.date = datetime(s.date);
-% s.rat = repmat("T170", numel(s.date),1);
-% S = structcat(S, s);
-
-%T182
-% Excluding T182 because his performance untethered was pretty bad
-% OE = PB_import_opto_ephys_log('T182');
-% s = struct;
-% s.date = OE.T182.Date;
-% s.rat = repmat("T182", numel(s.date),1);
-% S = structcat(S,s);
-
 S = struct;
 
 % T176
@@ -93,10 +73,10 @@ S = structcat(S,s);
 Surgery_dates = struct;
 Surgery_dates.A230 = '2019-07-01';
 Surgery_dates.A242 = '2019-06-01';
-Surgery_dates.T176 = '2018-04-01';
-Surgery_dates.T173 = '2018-01-26';
-Surgery_dates.T181 = '2018-05-28';
 Surgery_dates.K265 = '2018-05-16';
+Surgery_dates.T173 = '2018-01-26';
+Surgery_dates.T176 = '2018-04-01';
+Surgery_dates.T181 = '2018-05-28';
 Surgery_dates.T212 = '2018-08-04';
 
 the_rats = unique(fieldnames(Surgery_dates));
@@ -117,29 +97,26 @@ trials_hit = {};
 sens = [];
 bias = [];
 lapse = [];
-sens_std = [];
-bias_std = [];
-lapse_std = [];
 k = 0;
 for r = the_rats(:)'; r = r{:};
     k = k + 1;
     for tethered = [0,1]
-        [Psych.(r), ~, ~, Sessions] = PB_plot_performance(r, S.date(S.rat == r & S.tethered == tethered), ...
+        [Psych.(r), ~, Trials] = PB_plot_performance(r, S.date(S.rat == r & S.tethered == tethered), ...
                                                           'suppress_plots', true, ...
-                                                          'multi_sess_rule', 'take_all', ...
                                                           'control_only', true);
-        for s = 1:numel(Sessions.rat)
-            vl_done = ~Sessions.violated{s} & Sessions.responded{s} & Sessions.trial_type{s} == 'a';
-            vl_hit = vl_done & Sessions.is_hit{s};
-            trials_done{k,tethered+1}(s,1) = sum(vl_done);
-            trials_hit{k, tethered+1}(s,1) = sum(vl_hit) / sum(vl_done) * 100;
+        sessids = unique(Trials.sessid);
+        for i = 1:numel(sessids)
+            vl_done = Trials.sessid == sessids(i) & ...
+                      ~Trials.violated & ...
+                      Trials.responded & ...
+                      Trials.trial_type == 'a';
+            vl_hit = vl_done & Trials.is_hit;
+            trials_done{k,tethered+1}(i,1) = sum(vl_done);
+            trials_hit{k, tethered+1}(i,1) = sum(vl_hit) / sum(vl_done) * 100;
         end
-        sens(k, tethered+1) = Psych.(r).prct.sens(1);
-        bias(k, tethered+1) = Psych.(r).prct.bias(1);
-        lapse(k, tethered+1) = (Psych.(r).prct.gamma0(1)+(100-Psych.(r).prct.gamma1(1)))/2;
-        sens_std(k, tethered+1) = Psych.(r).prct.std.sens(1);
-        bias_std(k, tethered+1) = Psych.(r).prct.std.bias(1);
-        lapse_std(k,tethered+1) = (Psych.(r).prct.std.gamma0(1)+Psych.(r).prct.std.gamma1(1))/2;
+        sens(k, tethered+1) = Psych.(r).sens.est(1);
+        bias(k, tethered+1) = Psych.(r).bias.est(1);
+        lapse(k, tethered+1) = (Psych.(r).gamma0.est(1)+(100-Psych.(r).gamma1.est(1)))/2;
     end
 end
 %% Plot parameters
