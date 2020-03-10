@@ -6,15 +6,16 @@ function [] = make_recording_sessions_table()
     if ~isfolder('Z:\RATTER\PhysData\Raw\')
         error('Please mount the ARCHIVE server')
     end
-    if ~isfolder(P.tzluo_path)
-        error('Please clone the TZLUO repository from the Brody Lab gitlub')
-    end
-    addpath(genpath(P.tzluo_path))   
+%     if ~isfolder(P.tzluo_path)
+%         error('Please clone the TZLUO repository from the Brody Lab gitlub')
+%     end
+%     fprintf('Temporarily adding the TZLUO repository to the search path.\n')
+%     addpath(genpath(P.tzluo_path))   
     T = struct;
     T.rat = "";
     T.date = datetime.empty;
     %K265
-    T = add_to_table(T, 'K265', '2018-05-27');
+    T = add_to_table(T, 'K265', '2019-05-27');
     %T173
     T = add_to_table(T, 'T173', '2018-04-16');
     %T176
@@ -49,6 +50,8 @@ function [] = make_recording_sessions_table()
      T = add_to_table(T, 'T249', dates);
      % save
      writetable(struct2table(T), P.recording_sessions_path)
+%      rmpath(genpath(P.tzluo_path))
+%      fprintf('Removed the TZLUO repository to the search path.\n')
 end
 %% ADD_TO_TABLE
 % add dates to a tabular structure

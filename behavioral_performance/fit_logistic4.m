@@ -17,14 +17,10 @@ function [Fit, varargout] = fit_logistic4(Y, X, varargin)
         N(c,1) = sum(idx);
     end
     warning('off', 'MATLAB:nchoosek:LargeCoefficient')
-    % ***************** %
-    %       Fmincon     %
-    % ***************** %
     nLL0 = negLogLike_logistic4(P.initial_values, N, K, X_unique);
     if isinf(nLL0) || isnan(nLL0)
         error('Failure to evaluate initial values')
     end
-
     [x_fmin, f_fmin, exitflag, output, ~, grad, hessian] = ...
         fmincon(@(param) negLogLike_logistic4(param, N, K, X_unique), ...
                 P.initial_values, ...

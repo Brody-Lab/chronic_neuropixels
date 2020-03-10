@@ -11,12 +11,12 @@ function [] = analyze_performance_by_session()
     PD=bdata(['select protocol_data from sessions s where s.sessid in (' sessids ')']);
     fprintf(' done\n')
     for i = 1:numel(PD)
-        PD{i} = remove_trials(PD{i});
+        PD{i} = remove_trials_from_pd(PD{i});
     end
     
     B = struct;
     B.trials_done = cellfun(@(x) numel(x.hits), PD);
-    B.prct_hit = cellfun(@(x) sum(x.hits)/numel(x.hits), PD);
+    B.prct_hit = cellfun(@(x) sum(x.hits)/numel(x.hits), PD)*100;
     B.sens = nan(numel(PD,1));
     B.bias = nan(numel(PD,1));
     B.lapse = nan(numel(PD,1));
@@ -25,31 +25,12 @@ function [] = analyze_performance_by_session()
                        (PD{i}.sides == 'l' & ~PD{i}.hits);
         Psych = fit_psychometric(PD{i});
         B.sens(i,1) = Psych.sens;
-        B.bias(i,1) = Psych.sens;
-        lapse1 = Psych.gamma0*100;
-        lapse2 = 100-(Psych.gamma0+Psych.gamma1)*100;
-        B.lapse(i,1) = (lapse1+lapse2)/2;
+        B.bias(i,1) = abs(Psych.bias);
+        B.lapse(i,1) = Psych.lapse;
     end
     B = struct2table(B);
     B = [T, B];
     writetable(B, P.performance_by_session_path);
-end
-%% fit_psychometric
-% fit a psychometric curve
-%
-%=INPUT
-%
-%   pd
-%       a structure with protocol data for one session
-%
-%=OUTPUT
-%
-%   Psych
-%       a structure with information on the fitted psychometric
-function Psych = fit_psychometric(pd)
-    n_left = cellfun(@(x) numel(x.left)-1, pd.bupsdata);
-    n_right = cellfun(@(x) numel(x.right)-1, pd.bupsdata);
-    Psych = fit_logistic4(pd.pokedR,n_right-n_left);
 end
 %% remove_trials
 % Ensure all fields of the protocol data structure to have the same number
