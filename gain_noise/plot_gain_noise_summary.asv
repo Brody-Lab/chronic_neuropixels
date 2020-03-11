@@ -1,0 +1,91 @@
+
+function[] = plot_gain_noise_summary(varargin)
+parse_obj = inputParser;
+addParameter(parse_obj, 'noise_threshold_uV', 20, @(x) isnumeric(x) && isscalar(x))
+parse(parse_obj, varargin{:});
+P_input = parse_obj.Results;
+
+P=get_parameters;
+T= readtable(P.gain_noise_log_path);
+unique_probes = unique(T.probe_sn);
+n_probes = numel(unique_probes);
+days_implanted = cell(n_probes,1);
+T.cumul_days_implanted(isnan(T.cumul_days_implanted)) = 0;
+for i = 1:n_probes
+    idx = T.probe_sn == unique_probes(i);
+    days_implanted{i} = T.cumul_days_implanted(idx);
+    inds = find(idx);
+    for j = 1:numel(inds)
+        ind = inds(j);
+        data_file_path = [P.gain_noise_fldr_path filesep T.recording_id{ind} '.csv'];
+        D = readtable(data_file_path);
+        idx_electrodes = 1:T.electrodes_implanted(ind);
+        gain_median{i,1}(j,1) = median(D.gain(idx_electrodes));
+        gain_95{i,1}(j,1:2) = quantile(D.gain(idx_electrodes), [0.025, 0.975]);
+        noise_uV_median{i,1}(j,1) = median(D.noise_uV(idx_electrodes));
+        noise_uV_95{i,1}(j,1:2) = quantile(D.noise_uV(idx_electrodes), [0.025, 0.975]);
+        frac_noisy{i,1}(j,1) = sum(D.noise_uV(idx_electrodes)>P_input.noise_threshold_uV)/numel(idx_electrodes);
+    end
+end
+%% noise
+figure('Position', P.figure_position_gn_summary)
+set(gca, P.axes_properties_behavior{:}, ...
+         'XLim', [-10, 150])
+xlabel('Days implanted')
+ylabel('RMS noise (uV)')
+for i =1:n_probes
+    plot(days_implanted{i}, noise_uV_median{i}, 'ko--')
+end
+for i = 1:numel(P.figure_image_format)
+    saveas(gcf, [P.gain_noise_fldr_path filesep 'RMS_noise_summary'], P.figure_image_format{i})
+end
+%% fraction of electrodes with RMS noise above threshold
+figure('Position', P.figure_position_gn_summary)
+set(gca, P.axes_properties_behavior{:}, ...
+         'XLim', [-10, 150])
+xlabel('Days implanted')
+ylabel(['Fraction > ' num2str(P_input.noise_threshold_uV) ' uV'])
+for i =1:n_probes
+    plot(days_implanted{i}, frac_noisy{i}, 'ko--')
+end
+set(gca, 'Ylim', ylim.*[0,1])
+for i = 1:numel(P.figure_image_format)
+    saveas(gcf, [P.gain_noise_fldr_path filesep 'frac_noisy_electrodes'], P.figure_image_format{i})
+end
+return
+%% plot example
+yticklabel = cellfun(@num2str, num2cell(0:5:uV_broken), 'uni', 0);
+yticklabel{end} = ['\geq' num2str(P_input.noise_threshold_uV)];
+figure('Position', P.figure_position_gn_summary)
+set(gca, P.axes_properties_behavior{:})
+set(gca, 'Xlim', [0 961], ...
+         'xtick', [], ...
+         'YLim', [0, uV_broken], ...
+         'Ytick', 0:5:uV_broken, ...
+         'YtickLabel', yticklabel)
+if i == 1, ylabel('RMS noise (uV)'), end
+if i > 1, set(gca, 'ytick', []), end
+title(num2str(S(i).probe_sn))
+hdl = [];
+plot(S(i).noise_uV, 'ko', 'MarkerSize', 3);
+for bank = 0:2
+    idx = bank+1;
+    noise_median = nanmedian(S(i).noise_uV(chan_by_bank{idx}));
+    first_last_chans = chan_by_bank{idx}([1,end]);
+    hdl(idx) = plot(first_last_chans, noise_median*[1,1], 'Color', kColor.default(idx, :), 'linewidth', 2);    end
+
+
+hdl_portion_imp = area([0 S(i).channels_implanted], max(ylim)*[1,1], 'FaceAlpha', 0.1, 'EdgeColor', 'none', 'FaceColor', zeros(1,3));
+if S(i).days_implanted == 0
+    title('unimplanted')
+else
+    title([num2str(S(i).days_implanted) ' days implanted'])
+end
+xlabel('Channels')
+if i == 1
+    text(100, 2, 'bank 0', 'FontSize', 16, 'Color', kColor.default(1, :))
+    text(584, 2, '1', 'FontSize', 16, 'Color', kColor.default(2, :))
+    text(864, 2, '2', 'FontSize', 16, 'Color', kColor.default(3, :))
+elseif i == 2
+    legend(hdl_portion_imp, 'Segment implanted', 'Location', 'south', 'fontsize', 12)
+end

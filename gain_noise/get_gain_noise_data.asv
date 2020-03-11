@@ -1,0 +1,22 @@
+function [] = get_gain_noise_data()
+P=get_parameters;
+Log = readtable(P.gain_noise_log_path);
+for i = 1:size(Log,1)
+    recording_fldr_path = fullfile(P.gain_noise_data_path, Log.recording_id{i});
+    Res = analyze_gain_noise(recording_fldr_path);
+    save_gain_noise_csv(
+end
+
+function []=save_gain_noise_csv(Res)
+
+    % find the largest gain amplification for which measurements were made
+    ind= find(all(~isnan(Res.ap.gain & Res.ap.noise_uV)), 1, 'last');
+    if isempty(ind)
+        error('Cannot determine the input gain for which the data were recorded')
+    end
+    T =struct;
+    T.gain = Res.ap.gain(:,ind);
+    T.noise_uV = Res.ap.noise_uV(:,ind);
+    T.amplification = repmat(Res.amplification(ind)
+    
+    Res.amplification(ind)
