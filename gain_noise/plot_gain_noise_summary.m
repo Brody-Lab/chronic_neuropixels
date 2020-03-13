@@ -29,7 +29,7 @@ figure('Position', P.figure_position_gn_summary)
 set(gca, P.axes_properties_behavior{:}, ...
          'XLim', [-10, 150])
 xlabel('Days implanted')
-ylabel('RMS noise (uV)')
+ylabel('Median RMS noise (uV)')
 for i =1:n_probes
     plot(days_implanted{i}, noise_uV_median{i}, 'ko--')
 end

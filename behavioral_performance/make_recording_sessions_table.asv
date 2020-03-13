@@ -10,30 +10,7 @@ function [] = make_recording_sessions_table()
     T.rat = "";
     T.date = datetime.empty;
     %A230
-    dates = {'2019-07-15'};
-    T = add_to_table(T, 'A230', dates);
-    %A241
-    dates = {'2019-07-15'; 
-             '2019-09-26'; 
-             '2019-10-09';
-             '2020-01-14';
-             '2020-01-22';
-             '2020-01-23';};
-    T = add_to_table(T, 'A241', dates);
-    %A242
-    dates = {'2019-05-30'; 
-             '2019-05-31'; 
-             '2019-06-03';
-             '2020-06-10'};
-    T = add_to_table(T, 'A242', dates);
-    %A243
-    dates = {'2019-10-10'; 
-             '2019-10-29'; 
-             '2019-11-01'};
-    T = add_to_table(T, 'A243', dates);
-    %A249
-    dates = {'2020-02-11'};
-    T = add_to_table(T, 'A249', dates);
+    T = add_to_table(T, 'A', '2019-05-27');
     %K265
     T = add_to_table(T, 'K265', '2019-05-27');
     %T173

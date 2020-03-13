@@ -10,6 +10,6 @@ T = T(idx,:);
 unique_probes = unique(T.probe_sn);
 for i = 1:numel(unique_probes)
     idx = T.probe_sn == unique_probes(i);
-    T.days_implanted(idx) = cumsum(T.cumul_days_implanted(idx));
+    T.cumul_days_implanted(idx) = cumsum(T.cumul_days_implanted(idx));
 end
 writetable(T, P.gain_noise_log_path);
