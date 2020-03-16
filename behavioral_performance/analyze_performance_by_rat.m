@@ -1,14 +1,23 @@
 % ANALYZE_PERFORMANCE_BY_RAT provides summary statistics for each
 % rat and each condition in BEHAVIOR_TABLE.CSV
-function [] = analyze_performance_by_rat()
+function [] = analyze_performance_by_rat(varargin)
+    P_input = inputParser;
+    addParameter(P_input, 'min_trials', 10, @(x) isscalar(x) && (x == 0||x==1))
+    parse(P_input, varargin{:});
+    P_input = P_input.Results;
     add_folders_to_path;
     P = get_parameters;
+    fprintf('Fetching protocol data...')
     T=readtable(P.behavior_table_path);    
     [~,idx] = sort(T.sessid);
     T = T(idx,:);
     sessids = concatenate_for_sql(T.sessid);
-    fprintf('Fetching protocol data...')
-    PD =bdata(['select protocol_data from sessions s where s.sessid in (' sessids ')']);
+    [PD,fetched_sessids] =bdata(['select protocol_data, sessid from sessions s where s.sessid in (' sessids ')']);
+    % make sure the elements of PD and rows of T are th same and in the
+    % same order.
+    [~,i_T, i_fetched] = intersect(T.sessid, fetched_sessids);
+    T=T(i_T,:);
+    PD = PD(i_fetched);
     fprintf(' done\n')
     fprintf('Removing trials and unnecessary fields and empty sessions...')
     for i = 1:numel(PD)
@@ -42,6 +51,8 @@ function [] = analyze_performance_by_rat()
             By_rat.lapse(k,1) = Psych.lapse;
             By_rat.n_trials(k,1) = size(pd,1);
             By_rat.prct_correct(k,1) = sum(pd.hits)/numel(pd.hits)*100;
+            trials_done = cellfun(@(x) numel(x.hits), PD(idx));
+            By_rat.trials_done(k,1) =nanmedian(trials_done);
         end
     end
     By_rat.abs_bias=abs(By_rat.bias);

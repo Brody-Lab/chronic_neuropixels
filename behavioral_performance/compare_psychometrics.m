@@ -1,9 +1,6 @@
-% PLOT_PSYCHOMETRICS plot psychometric curves
-function [] = compare_psychometrics(varargin)
-P_input = inputParser;
-addParameter(P_input, 'tethered', 1, @(x) isscalar(x) && (x == 0||x==1))
-parse(P_input, varargin{:});
-P_input = P_input.Results;
+% PLOT_PSYCHOMETRICS plot psychometric curves from the training and
+% recording sessions
+function [] = compare_psychometrics()
 P = get_parameters;
 T = readtable(P.performance_by_rat_path);
 x = -30:30;
@@ -26,4 +23,4 @@ for i = 1:numel(unique_rats)
     xlabel('#R-#L clicks')
     ylabel('Percent chose right')
     title(unique_rats{i})
-end    
+end

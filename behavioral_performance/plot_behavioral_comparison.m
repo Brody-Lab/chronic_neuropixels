@@ -1,4 +1,4 @@
-function[]=plot_psychometric_comparison(data_type)
+function[]=plot_behavioral_comparison(data_type)
 P = get_parameters;
 T = readtable(P.performance_by_rat_path);
 figure('Position', P.figure_position_behavioral_comparison)
@@ -17,13 +17,14 @@ for i=1:numel(unique_rats)
         data_tethered(i)=abs(data_tethered(i));
         data_untether(i)=abs(data_untether(i));
     end
-    plot(data_untether(i), data_tethered(i), 'o');
+    plot(data_untether(i), data_tethered(i), 'o', 'Color', P.color_order(i,:));
 end
-pval = signtst(data_tethered, data_untether);
+pval = num2str(signtest(data_tethered, data_untether));
 diag_coords = [min([xlim,ylim]), max([xlim,ylim])];
 plot(diag_coords,diag_coords, 'k','linewidth', 0.5)
+title(['p = ' pval], 'FontSize', 10, 'FontWeight', 'normal')
 xlabel('Untethered')
 ylabel('Tethered for recording')
 for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.behavior_plots_folder filesep 'psychometric_' data_type 'p<'], P.figure_image_format{i})
+    saveas(gcf, [P.behavior_plots_folder filesep 'psychometric_' data_type], P.figure_image_format{i})
 end

@@ -11,29 +11,7 @@ function [] = make_behavior_table()
     T.date = datetime.empty;
     Rec_sess = readtable(P.recording_sessions_path);
     for i = 1:numel(Rat_info.rat_name)
-        dates_tethered = [];
-        switch Rat_info.rat_name{i}
-            case 'A230'
-                dates_tethered = bdata(['select sessiondate from sessions where '...
-                                        'sessiondate>="2019-07-15" and '...
-                                        'ratname="A230" and hostname="Rig205"']);
-            case 'A242'
-                sessid = bdata(['select sessid from sessions where '...
-                                'sessiondate>="2019-06-18" and '...
-                                'ratname="A242" and hostname="Rig205"']); 
-                % for these sessions there is no physdata collected and video
-                % shows rat not plugged in or video is broken so best to
-                % exclude these sessions
-                A242_in_physrig_but_maybe_not_tethered = [704440, ...
-                                                          704117, ...
-                                                          705282, ...
-                                                          709379];
-                sessid = setdiff(sessid, A242_in_physrig_but_maybe_not_tethered);
-                dates_tethered = bdata(['select sessiondate from sessions s where s.sessid in (' ...
-                                        concatenate_for_sql(sessid) ')']);
-            otherwise
-                dates_tethered = Rec_sess.date(strcmp(Rec_sess.rat, Rat_info.rat_name{i}));
-        end
+        dates_tethered = Rec_sess.date(strcmp(Rec_sess.rat, Rat_info.rat_name{i}));
         % add the sessids for the dates when the rat was tethered
         date_char = concatenate_for_sql(datetime(dates_tethered));
         [sessid, dates_tethered]=bdata(['select sessid, sessiondate from sessions where ratname="{S}" and sessiondate in (' date_char ...
