@@ -10,6 +10,7 @@ T.n_units = nan(n_sessions,1);
 T.n_units_each_area = strings(n_sessions,1);
 list_data_fldrs = dir(sorted_data_path);
 data_fldr_names = string({list_data_fldrs.name})';
+T.probe_sn = nan(n_sessions,1);
 for i =1:n_sessions
     experimenter = get_experimenter_of_rat(T.rat_name{i});
     sess_fldr_path = [sorted_data_path    filesep ...
@@ -60,5 +61,6 @@ for i =1:n_sessions
                         num2str(n_unit_this_area) ')'];
         end
         T.n_units_each_area{i} = area_str;
+        T.probe_sn(i,1) = unique(Cells.meta.ap_meta.imDatPrb_sn);
     end
 end

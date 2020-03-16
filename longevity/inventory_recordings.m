@@ -13,7 +13,6 @@
 function T = inventory_recordings(folder_paths, varargin)
 validateattributes(folder_paths, {'cell', 'string', 'char'},{})
 input_parser = inputParser;
-% addParameter(input_parser, 'output', '', @(x) all(ismember(x, {'char', 'datetime', 'string'})))
 parse(input_parser, varargin{:});
 P = input_parser.Results;
 folder_paths = string(folder_paths);
@@ -39,7 +38,7 @@ for i = 1:numel(rat_list)
                 rec_file_list = dir([sess_fldr_path  filesep '**' filesep '*.*']); % recursive
                 is_tetrodes = any(arrayfun(@(x) contains(x.name, '.ncs'), rec_file_list)) || ...
                                any(arrayfun(@(x) contains(x.name, '.ntt'), rec_file_list));
-                is_neuropixels = any(arrayfun(@(x) contains(x.name, '.ap.bin'), rec_file_list));
+                is_neuropixels = any(arrayfun(@(x) contains(x.name, '.ap.meta'), rec_file_list));
                 if ~is_tetrodes && ~is_neuropixels
                     warning('\nUnknown physiology files: %s', sess_fldr_path)
                 end
@@ -69,9 +68,13 @@ for i = 1:numel(rat_list)
                         sess_date = sess_list(j).name(12:21);
                     end
                     sess_date = datetime(sess_date, 'inputFormat', 'yyyy_MM_dd');
-                    ap_file = dir([sess_fldr_path, filesep '**' filesep '*.ap.bin']); % recursive3  
-                    % 384 * 1 byte x 2 + 1 byte digital word
-                    dur_min = ap_file(1).bytes/770/3e4/60;
+                    ap_meta_file = find_related_file(sess_fldr_path, 'ap.meta', ...
+                                                        'ignore_missing', false, ...
+                                                        'ignore_multiple', true, ...
+                                                        'search_subfolders', true);
+                    ap_meta_file=find_most_recent(ap_meta_file);
+                    Meta = NP_import_meta(ap_meta_file);
+                    dur_min = Meta.fileTimeSecs/60;
                 end
                 % log in the table
                 k = k + 1;
