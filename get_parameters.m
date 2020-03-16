@@ -22,6 +22,7 @@ P.gain_noise_log_path =         [P.gain_noise_fldr_path filesep 'gain_noise_log.
 P.gain_noise_data_path = 'X:\RATTER\PhysData\NP_gain_noise\';
 P.longevity_folder_path = [P.repository_path filesep 'longevity'];
 P.Thomass_recordings_path = [P.longevity_folder_path filesep 'Thomass_recordings.csv'];
+P.implant_log_path = [P.longevity_folder_path filesep 'implant_log.csv'];
 %% plotting formats
 P.figure_image_format = {'png', 'svg'};
 P.figure_position_psychometrics = [rand*1000, rand*1000, 250, 250];
