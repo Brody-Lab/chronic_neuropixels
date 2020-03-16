@@ -20,7 +20,7 @@ P.pharmacology_log_path =       [P.repository_path filesep 'behavioral_performan
 P.gain_noise_fldr_path =        [P.repository_path filesep 'gain_noise'];
 P.gain_noise_log_path =         [P.gain_noise_fldr_path filesep 'gain_noise_log.csv'];
 P.gain_noise_data_path = 'X:\RATTER\PhysData\NP_gain_noise\';
-
+P.longevity_folder_path = [P.repository_path filesep 'longevity'];
 %% plotting formats
 P.figure_image_format = {'png', 'svg'};
 P.figure_position_psychometrics = [rand*1000, rand*1000, 250, 250];
