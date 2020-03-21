@@ -22,13 +22,16 @@ P.gain_noise_log_path =         [P.gain_noise_fldr_path filesep 'gain_noise_log.
 P.gain_noise_data_path = 'X:\RATTER\PhysData\NP_gain_noise\';
 P.longevity_folder_path = [P.repository_path filesep 'longevity'];
 P.Thomass_recordings_path = [P.longevity_folder_path filesep 'Thomass_recordings.csv'];
+P.Adrians_recordings_path = [P.longevity_folder_path filesep 'recordings_log.csv'];
 P.implant_log_path = [P.longevity_folder_path filesep 'implant_log.csv'];
+P.plots_folder_path = [P.repository_path filesep 'plots']; % please gitignore or exclude this
 %% plotting formats
 P.figure_image_format = {'png', 'svg'};
 P.figure_position_psychometrics = [rand*1000, rand*1000, 250, 250];
 P.figure_position_behavioral_comparison = [rand*1000, rand*1000, 250, 250];
 P.figure_position_gn = [rand*1000, rand*1000, 350, 250];
 P.figure_position_gn_summary = [rand*1000, rand*1000, 250, 250];
+P.figure_position_longevity = [rand*1000, rand*1000, 400, 350];
 P.axes_properties_behavior = {'FontSize', 14, ...
                              'Color', 'none', ...
                              'TickDir', 'Out',...
@@ -72,3 +75,9 @@ P.color_order = repmat(P.color_order, 10, 1);
 %% analyses
 P.noise_threshold_uV = 20;
 P.gain_noise_example = 'gain_noise_17131311352_2019_10_09';
+% P.longevity_time_bin_edges = [0.5 1.5 2.5 6.5 14.5 30.5 60.5 120.5 500];
+P.longevity_log2_time_bin_edges = -0.5:7.5;
+P.longevity_time_bin_edges = 2.^(P.longevity_log2_time_bin_edges);
+P.longevity_log2_time_bin_centers = P.longevity_log2_time_bin_edges(1:end-1)+diff(P.longevity_log2_time_bin_edges)/2;
+P.longevity_time_bin_centers = 2.^(P.longevity_log2_time_bin_centers);
+P.longevity_n_boots = 1000;
