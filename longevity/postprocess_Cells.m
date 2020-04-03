@@ -1,3 +1,16 @@
+%% Fix the datetime
+for i = 1:length(Cells)
+    if isdatetime(Cells{i}.sess_date)
+        continue
+    else
+        Cells{i}.sess_date = Cells{i}.sess_date(1,:);
+        if contains(Cells{i}.sess_date,'-')
+            Cells{i}.sess_date = datetime(Cells{i}.sess_date, 'input', 'yyyy-MM-dd');
+        else
+            Cells{i}.sess_date = datetime(Cells{i}.sess_date, 'input', 'yyyy_MM_dd');
+        end
+    end
+end
 %% and then add any additional fields that don't require separate code for Thomas' and Adrian's sessions. 
 % Thomas: This would be a good place to add new fields that seem useful for generating figures.
 % su_count=0;
@@ -67,13 +80,14 @@ for i = 1:numel(Cells)
         idx = strcmp(implant_log.rat, Cells{i}.rat) & ...
                      implant_log.neuropixels_sn==str2num(Cells{i}.probe_serial);
         Cells{i}.electrodes=NP_get_cell_anatom_loc(implant_log(idx,:), elec_dist_from_tip_um(in_brain));
+        Cells{i}.electrodes.in_brain = in_brain(:);
     end
     Cells{i}.electrodes.bank = ones(Cells{i}.n_electrodes_in_brain,1)*Cells{i}.unique_bank;
 end
 %% Normalize anatomical coordinates
 for i = 1:numel(Cells)
-    Cells{i}.electrodes.DV = -abs(Cells{i}.electrodes.DV);
-    Cells{i}.electrodes.ML =  abs(Cells{i}.electrodes.ML);
+    Cells{i}.DV = -abs(Cells{i}.DV);
+    Cells{i}.ML =  abs(Cells{i}.ML);
     Cells{i}.electrodes.DV = -abs(Cells{i}.electrodes.DV);
     Cells{i}.electrodes.ML =  abs(Cells{i}.electrodes.ML);
 end

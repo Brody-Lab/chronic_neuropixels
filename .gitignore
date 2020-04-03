@@ -33,5 +33,7 @@ $RECYCLE.BIN/
 # temporary folders
 \plots
 \data
+\photographs
+\2.611
 
 # End of https://www.gitignore.io/api/windows

@@ -1,7 +1,11 @@
 % PLOT_GAIN_NOISE_SUMMARY plot the root-mean-square noise of the implanted
 % portion of the probe against the number of days the probe has been
 % implanted
-function[] = plot_gain_noise_summary()
+function[] = plot_gain_noise_summary(varargin)
+parseobj = inputParser;
+addParameter(parseobj, 'axes', [], @(x) isempty(x) || isa(x,  'matlab.graphics.axis.Axes'));
+parse(parseobj, varargin{:});
+P_in = parseobj.Results;
 P=get_parameters;
 T= readtable(P.gain_noise_log_path);
 unique_probes = unique(T.probe_sn);
@@ -25,8 +29,13 @@ for i = 1:n_probes
     end
 end
 %% noise
+if isempty(P_in.axes)
+    figure('Position', P.figure_position_gn_summary)
+else
+    axes(P_in.axes)
+end
 figure('Position', P.figure_position_gn_summary)
-set(gca, P.axes_properties_behavior{:}, ...
+set(gca, P.axes_properties{:}, ...
          'XLim', [-10, 150])
 xlabel('Days implanted')
 ylabel('Median RMS noise (uV)')
@@ -38,7 +47,7 @@ for i = 1:numel(P.figure_image_format)
 end
 %% fraction of electrodes with RMS noise above threshold
 figure('Position', P.figure_position_gn_summary)
-set(gca, P.axes_properties_behavior{:}, ...
+set(gca, P.axes_properties{:}, ...
          'XLim', [-10, 150])
 xlabel('Days implanted')
 ylabel(['Fraction > ' num2str(P.noise_threshold_uV) ' uV'])

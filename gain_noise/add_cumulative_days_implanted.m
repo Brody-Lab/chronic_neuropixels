@@ -12,4 +12,5 @@ for i = 1:numel(unique_probes)
     idx = T.probe_sn == unique_probes(i);
     T.cumul_days_implanted(idx) = cumsum(T.cumul_days_implanted(idx));
 end
+T.cumul_days_implanted(isnan(T.cumul_days_implanted))=0;
 writetable(T, P.gain_noise_log_path);
