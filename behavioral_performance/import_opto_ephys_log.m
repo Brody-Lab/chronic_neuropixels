@@ -3,7 +3,6 @@
 %   LOG = IMPORT_OPTO_EPHYS_LOG() makes a structure with all data in Opto-ephys log.xlsx
 %   LOG = IMPORT_OPTO_EPHYS_LOG(Rats) makes a table with only the rats specified in the string
 %   or cell array "Rats"
-%   LOG = IMPORT_OPTO_EPHYS_LOG(Rats, Dates) makes a table 
 function [Log] = import_opto_ephys_log(varargin)
 input_parser = inputParser;
 addOptional(input_parser, 'rat_subset', '', @(x) ischar(x) || isstring(x) || iscell(x))

@@ -10,8 +10,6 @@
 %   Psych
 %       a structure with information on the fitted psychometric
 function Psych = fit_psychometric(pd)
-%     n_left = cellfun(@(x) numel(x.left)-1, pd.bupsdata);
-%     n_right = cellfun(@(x) numel(x.right)-1, pd.bupsdata);
     Psych = fit_logistic4(pd.pokedR,pd.n_right-pd.n_left);
     Psych.gamma0=Psych.gamma0*100;
     Psych.gamma1=Psych.gamma1*100;

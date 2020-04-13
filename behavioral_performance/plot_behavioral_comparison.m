@@ -23,7 +23,6 @@
 %       The relative [x,y] position from the axes's left, bottom corner. A
 %       value of [0,0] is the lower left corner and a value of [1,1] is the
 %       upper right corner. If it is empty, the sample size is not shown.
-
 function[]=plot_behavioral_comparison(data_type, varargin)
 parseobj = inputParser;
 addParameter(parseobj, 'axes', [], @(x) isempty(x) || isa(x,  'matlab.graphics.axis.Axes'));
@@ -53,7 +52,7 @@ for i=1:numel(unique_rats)
         data_tethered(i)=abs(data_tethered(i));
         data_untether(i)=abs(data_untether(i));
     end
-    plot(data_untether(i), data_tethered(i), 'o', 'Color', P.color_order(i,:));
+    plot(data_untether(i), data_tethered(i), 'o', 'Color', P.color_order(i,:), 'linewidth', 1);
 end
 diag_coords = [min([xlim,ylim]), max([xlim,ylim])];
 plot(diag_coords,diag_coords, 'k','linewidth', 0.5);

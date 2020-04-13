@@ -1,3 +1,0 @@
-figure4_1
-figure4_2
-figure4_3

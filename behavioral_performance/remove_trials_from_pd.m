@@ -1,9 +1,9 @@
-%% remove_trials
-% Ensure all fields of the protocol data structure to have the same number
-% of trials and remove trials with violations or optogenetic illumination
+% REMOVE_TRIALS_FROM_PD Ensure all fields of the protocol data structure to
+% have the same number of trialss
+%
 %=INPUT
 %
-%   pd
+%   pdw
 %       a structure with protocol data for one session
 %
 %=OUTPUT

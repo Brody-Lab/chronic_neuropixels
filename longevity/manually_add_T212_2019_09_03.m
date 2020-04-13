@@ -1,13 +1,12 @@
-% manually_add_T212_2019_09_03
-%
-%   This data file was somehow excluded.
+% A script to manually add a datafile that was excluded during initial
+% processing
 bank_electrodes = {[1:191,193:384],[385:575,577:768],[769:863,865:960]}; % list the electrodes corresponding to each bank
 implant_log = readtable(P.implant_log_path);
-%%
-load([P.data_folder_path filesep 'Cells.mat'])
-%%
+if ~exist('Cells', 'var')
+    load([P.data_folder_path filesep 'Cells.mat'])
+end
 i = 169;
-file_path = ['E:\RATTER\PhysData\NP_sorted\Thomas\T212\T212_2019_09_03\spikesort_2020_03_15_15_00_46_ks2jrc' ...
+file_path = ['X:\RATTER\PhysData\NP_sorted\Thomas\T212\T212_2019_09_03\spikesort_2020_03_15_15_00_46_ks2jrc' ...
              '\T212_2019_09_03_Cells.mat'];
 tmp = load(file_path);
 fields = fieldnames(tmp);

@@ -1,4 +1,7 @@
-%% Fix the datetime
+% POSTPROCESS_CELLS A script for calculating various metrics for Cells
+% after collecting the Cells files
+
+%% Standardize the datetime format
 for i = 1:length(Cells)
     if isdatetime(Cells{i}.sess_date)
         continue
@@ -11,9 +14,7 @@ for i = 1:length(Cells)
         end
     end
 end
-%% and then add any additional fields that don't require separate code for Thomas' and Adrian's sessions. 
-% Thomas: This would be a good place to add new fields that seem useful for generating figures.
-% su_count=0;
+%%
 for i=1:length(Cells)
     if Cells{i}.days_since_surgery<0
         error('Session date is before the surgery date. Something is wrong.');
@@ -30,20 +31,10 @@ for i=1:length(Cells)
     Cells{i}.n_units_deep = length(Cells{i}.ks_good(Cells{i}.DV>Cells{i}.median_electrode_depth));
     Cells{i}.n_good_units_deep = sum(Cells{i}.ks_good(Cells{i}.DV>Cells{i}.median_electrode_depth));
     n_spikes = sum(cellfun(@numel,Cells{i}.raw_spike_time_s));
-    switch Cells{i}.rat
-        case {'T170', 'T173', 'T176'}
-            Cells{i}.phase = '3A';
-            Cells{i}.explantable = false;
-        case {'T181', 'T182'}
-            Cells{i}.phase = '3B';
-            Cells{i}.explantable = false;
-        otherwise
-            Cells{i}.phase = '3B';
-            Cells{i}.explantable = true;
-    end
 end
 %% Fix Thomas's calculation of cell position
 implant_log = readtable(P.implant_log_path);
+implant_log.rat = string(implant_log.rat);
 for i = 1:numel(Cells)
     if Cells{i}.rat(1) ~= 'A'
         idx = strcmp(implant_log.rat, Cells{i}.rat) & ...
@@ -65,8 +56,14 @@ for i = 1:numel(Cells)
         Cells{i}.electrodes.DV = DV(:);
         Cells{i}.electrodes.ML = ML(:)+Cells{i}.penetration.craniotomy_ML;
         Cells{i}.electrodes.AP = AP(:)+Cells{i}.penetration.craniotomy_AP;
+        Cells{i}.electrodes.index = [1:191, 193:384]' + 383*Cells{i}.unique_bank;
+        trode_area = strings(960,1);
+        for j = 1:numel(Cells{i}.penetration.regions)
+            trode_area(Cells{i}.penetration.regions(j).electrodes) = Cells{i}.penetration.regions(j).name{1};
+        end
+        Cells{i}.electrodes.brain_area = trode_area(Cells{i}.electrodes.index);
     else
-        if Cells{i}.phase == "3A"
+        if any(strcmp(Cells{i}.rat, {'T170', 'T173', 'T176'}))
             tip_um = 137;
         else
             tip_um = 195;
@@ -81,10 +78,16 @@ for i = 1:numel(Cells)
                      implant_log.neuropixels_sn==str2num(Cells{i}.probe_serial);
         Cells{i}.electrodes=NP_get_cell_anatom_loc(implant_log(idx,:), elec_dist_from_tip_um(in_brain));
         Cells{i}.electrodes.in_brain = in_brain(:);
+        Cells{i}.electrodes.index = [1:191, 193:384]' + 383*Cells{i}.unique_bank;
+        Cells{i}.electrodes.brain_area = NP_get_region_of_electrode(implant_log(idx,:), ...
+                                                                   'sites', [1:191, 193:384]', ...
+                                                                   'bank', Cells{i}.unique_bank);
     end
     Cells{i}.electrodes.bank = ones(Cells{i}.n_electrodes_in_brain,1)*Cells{i}.unique_bank;
+    Cells{i}.electrodes.index=Cells{i}.electrodes.index(Cells{i}.electrodes.in_brain);
+    Cells{i}.electrodes.brain_area=Cells{i}.electrodes.brain_area(Cells{i}.electrodes.in_brain);
 end
-%% Normalize anatomical coordinates
+%% Standardize anatomical coordinates
 for i = 1:numel(Cells)
     Cells{i}.DV = -abs(Cells{i}.DV);
     Cells{i}.ML =  abs(Cells{i}.ML);
@@ -109,4 +112,10 @@ for i = 1:numel(Cells)
         file_time_s = Cells{i}.meta.ap_meta.fileTimeSecs;
     end
     Cells{i}.fr = cellfun(@(x) numel(x)/file_time_s, Cells{i}.raw_spike_time_s);
+end
+%% Standardize region names format
+for i = 1:numel(Cells)
+    region_names = Cells{i}.region_names(:);
+    region_names(cellfun(@isempty, region_names)) = {''};
+    Cells{i}.region_names = string(region_names);
 end

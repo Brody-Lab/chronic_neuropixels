@@ -1,6 +1,9 @@
 % PLOT_AVERAGE_PSYCHOMETRICS plot psychometric curves
 %
-% OPTIONAL OUTPUT
+%=OPTIONAL INPUT
+%
+%   1) the axes object
+%=OPTIONAL OUTPUT
 %
 %   1) the axes object
 function varargout = plot_average_psychometrics(varargin)
@@ -33,7 +36,7 @@ for tethered = [0,1]
     wt=sqrt(T.n_trials(inds))/sum(sqrt(T.n_trials(inds)));
     y = y.*wt;
     boots=bootstrp(P.n_boots, @sum, y);
-    hdl(tethered+1) = plot(x, mean(boots), 'k-');
+    hdl(tethered+1) = plot(x, mean(boots), 'k-', 'linewidth', 1);
     if tethered == 0
         hdl(tethered+1).LineStyle='--';
     end

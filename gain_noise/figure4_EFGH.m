@@ -1,26 +1,11 @@
-% FIGURE4B plot the quality metrics of neural units recorded from a probe
-% that was implanted in separate animals
+% figure4_EFGH Make panels E-H of figure 4
 %
 %=OPTIONAL INPUT
 %
 %   1) from_scratch
 %       A logical scalar specifying whether to make the plots from scratch
-function [] = figure4_2(varargin)
+function [] = figure4_EFGH(Cells)
 P=get_parameters;
-if nargin > 0
-    from_scratch = varargin{1};
-else
-    from_scratch = false;
-end
-if from_scratch
-    collect_cell_files
-    postprocess_Cells
-else
-    if ~exist('Cells', 'var')
-        fprintf('Loading the variabe CELLS...')
-        load([P.data_folder_path filesep 'Cells.mat'])
-    end
-end
 figure('Pos', [100,100,1500,300])
 k = 0;
 n_col = 4;

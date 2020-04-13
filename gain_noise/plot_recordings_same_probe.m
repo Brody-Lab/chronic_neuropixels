@@ -43,7 +43,13 @@ for i = 1:numel(rat_name)
     Ct = groupcounts(T(idx,:), 'probe_serial'); 
     idx = idx & T.probe_serial == Ct.probe_serial(end);    
 %     T(idx,:) for debugging
-    hdl(i) = plot(T.days_since_surgery(idx)+1, T.(P_in.metric)(idx), 'o-', 'Color', P.color_order(i,:));
+    hdl(i) = plot(T.days_since_surgery(idx)+1, T.(P_in.metric)(idx), 'o-', ...
+                    'Color', P.color_order(i,:), ...
+                    'linewidth', 1);
+    
+    S.metric{i,1} = T.(P_in.metric)(idx);
+    S.days_since_surgery{i,1}=T.days_since_surgery(idx);
+    S.implant{i,1} = repmat(i, size(S.metric{i,1}));
 end
 set(gca, 'xlim', [2^-0.5, 2^7], ...
          'xtick', 2.^(0:9));
@@ -55,10 +61,17 @@ switch P_in.metric
     case 'n_good_units'
         ylabel('Single units')
     case 'fr'
-        ylabel('Total firing rate')
+        ylabel('Event rate')
     case 'Vpp'
         ylabel('Peak-to-peak amplitude (uV)')
 end
 if P_in.legend
     legend(hdl, {'Initial', 'Second', 'Third'}, 'location', 'best')
 end
+% Stats
+S = structfun(@cell2mat, S, 'uni', 0);
+S = struct2table(S);
+pvals = anovan(S.metric, {S.implant}, 'display', 'off', 'continuous', [1]);
+fprintf('\nANOVA on %s ', P_in.metric)
+fprintf('\n   factor=the implant order: p = %0.3f', pvals(1))
+% fprintf('\n   days since surgery: p = %0.3f', pvals(2))

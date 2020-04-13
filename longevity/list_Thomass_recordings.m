@@ -1,4 +1,5 @@
-map_bucket_drive
+% a script for finding Thomas's data
+
 sorted_data_path = {'X:\RATTER\PhysData\NP_sorted\Thomas';
                     'X:\RATTER\PhysData\NP_sorted\Chuck';};
 T0 = inventory_recordings(sorted_data_path);

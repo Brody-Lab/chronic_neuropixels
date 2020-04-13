@@ -19,9 +19,18 @@ function [] = make_behavior_table()
         T = add_to_table(T, dates_tethered, Rat_info.rat_name{i}, sessid, true);
         % add the sessids for the dates when the rat was in the training room
         date_surgery = datestr(datetime(Rat_info.Neuropixels_surgery_date(i)), 'yyyy-mm-dd');
-        date_30d_b4 = datestr(datetime(Rat_info.Neuropixels_surgery_date(i))-30, 'yyyy-mm-dd');
-        [dates_training, sessid] = bdata(['select sessiondate, sessid from sessions where sessiondate >="' date_30d_b4 ...
-                                '" and sessiondate <= "' date_surgery '" and ratname="' Rat_info.rat_name{i} '"']);
+        date_60d_aft = datestr(datetime(Rat_info.Neuropixels_surgery_date(i))+60, 'yyyy-mm-dd');
+        [dates_training, sessid] = bdata(['select sessiondate, sessid ' ...
+                                          'from sessions ' ...
+                                          'where sessiondate > "' date_surgery '" ' ...
+                                          'and hostname < 100 ' ... % training rig rather than a phys rig
+                                          'and ratname="' Rat_info.rat_name{i} '"']);
+        if numel(dates_training) > 30
+            dates_training = dates_training(1:30);
+            sessid = sessid(1:30);
+        elseif numel(dates_training) < 1
+            error('No untethered session for rat %s after surgery', Rat_info.rat_name{i})
+        end
         T = add_to_table(T, dates_training, Rat_info.rat_name{i}, sessid, false);
     end
     T = struct2table(T);

@@ -1,4 +1,6 @@
-function Log = PB_import_pharmacology_log()
+% IMPORT_PHARMACOLOGY_LOG read the CSV file "Pharmacology log.xlsx"
+
+function Log = import_pharmacology_log()
 
 warning('off', 'MATLAB:table:ModifiedVarnames')
 P = get_parameters;

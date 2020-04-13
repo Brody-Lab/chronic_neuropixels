@@ -1,11 +1,13 @@
-% FIGURE 4C plot the choice selectivity of isolated units recorded from a
+% figure4_IJKL Make panels I-L of figure 4
+%
+% plot the choice selectivity of isolated units recorded from a
 % probe implanted in separate animals
 %
 %=OPTIONAL INPUT
 %
 %   1) from_scratch
 %       A logical scalar specifying whether to make the plots from scratch
-function [] = figure4c(varargin)
+function [] = figure4_IJKL(varargin)
 P = get_parameters;
 if nargin > 0
     from_scratch = varargin{1};
@@ -27,11 +29,11 @@ for i = 1:numel(P.choice_sel_file_names)
     k = k + 1;
     subplot(1,n_col, k)
     set(gca, P.axes_properties{:})
-    PB_plot_choice_mod(ChoiceMod{i}.time_s, ChoiceMod{i}.AUC, ...
+    plot_choice_mod(ChoiceMod{i}.time_s, ChoiceMod{i}.AUC, ...
                        'ax', gca, ...
                        'color_map_range', [0 1], ...
                        'merge_LR', true, ...
-                       'color_bar', i==1)
+                       'color_bar', false)
     plot([0,0],ylim, 'w-', 'linewidth', 1)
         set(gca, 'outerpos', get(gca, 'outerpos').*[1,0,1,0.8]+[0,0.05,0,0])
     xlabel('Time from movement (s)')
@@ -43,10 +45,14 @@ end
 k = k + 1;
 subplot(1,n_col, k)
 set(gca, P.axes_properties{:})
-avg = cell2mat(cellfun(@(x) mean(abs(x.AUC-0.5)), ChoiceMod, 'uni', 0)');
-hline = plot(ChoiceMod{i}.time_s, avg);
-for i = 1:numel(hline)
-    hline(i).Color = P.color_order(i,:);
+% avg = cell2mat(cellfun(@(x) mean(abs(x.AUC-0.5)), ChoiceMod, 'uni', 0)');
+% hline = plot(ChoiceMod{i}.time_s, avg, 'linewidth', 1);
+for i = 1:numel(ChoiceMod)
+    hdl(i) = shadedErrorBar(ChoiceMod{i}.time_s, abs(ChoiceMod{i}.AUC-0.5), {@mean, @sem});
+    hdl(i).mainLine.Color = P.color_order(i,:);
+    hdl(i).mainLine.LineWidth = 1;
+    hdl(i).patch.FaceColor = P.color_order(i,:);
+    hdl(i).patch.FaceAlpha = 0.3;
 end
 ylim(ylim.*[0,1]);
 plot([0,0],ylim, 'k-', 'linewidth', 0.5)
@@ -64,7 +70,12 @@ for i = 1:numel(children)
     set(children(i), 'Position', pos(i,:))
 end
 
-
-for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.plots_folder_path filesep 'figure4_3'], P.figure_image_format{i})
+% show some stats
+peak = cellfun(@(x) max(abs(x.AUC-0.5),[],2), ChoiceMod, 'uni', 0)';
+days_elapsed=[];
+for i = 1:numel(ChoiceMod)
+    days_elapsed =[days_elapsed; repmat(i, size(peak{i}))];
 end
+pval=anovan(cell2mat(peak), days_elapsed, 'display', 'off', 'continuous', 1);
+fprintf('\nANOVA on the the peak choice selectivity with the main factor as number of previous implants')
+fprintf('\n   p=%f0.3', pval)

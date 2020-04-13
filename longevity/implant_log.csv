@@ -23,10 +23,10 @@ T182,fiber,5/30/2018,,,mDlx-ChR2,ADS,right,bregma,1.7,2.4,0,3.5,-10,0,0,0,Either
 T182,fiber,5/30/2018,,,mDlx-ChR2,M2,right,bregma,2.1,1.5,0,0.5,0,0,0,0,Either a 50 um or 62.5 um core fiber
 T182,Neuropixels_3B,5/30/2018,10/2/2018,17131311881,,Striatum_M2,right,bregma,1.9,1.3,0,8.2,15,0,0,0,
 T179,Neuropixels_3B,1/20/2019,,17131311342,,ECIC,right,IA0,2,3,10,5.8,0,0,0,0,
-T196,Neuropixels_3B,4/22/2019,9/4/2019,17131312042,,SC_IC,right,IA0,1.8,1.7,10,8,40,0,0,0,
+T196,Neuropixels_3B,4/22/2019,9/4/2019,17131312042,,SC_IC,left,IA0,1.8,-1.7,10,8,40,0,0,0,
 K265,Neuropixels_3B,5/16/2019,,17131311562,,Striatum_M2,right,bregma,1.9,0.8,0,7,20,0,0,0,
 K265,fiber,5/16/2019,,,Cre-ChR2,Striatum,right,bregma,1.9,3.5,0,3.8,-15,0,0,0,
-T209,Neuropixels_3B,5/6/2019,9/6/2019,17131311352,,SC_IC,right,IA0,1.6,1.6,10,7.8,40,0,0,0,
+T209,Neuropixels_3B,5/6/2019,9/6/2019,17131311352,,SC_IC,left,IA0,1.6,-1.6,10,7.8,40,0,0,0,
 T209,cannula,5/6/2019,,,,IC,right,IA0,1.1,3.7,10,4.6,-10,0,0,0,
 K308,Neuropixels_3B,4/18/2019,,17131311881,,M2,left,bregma,1.5,-1.8,0,2.1,0,0,0,1,
 K308,fiber,4/18/2019,,,Cre-FlinCR,M2,left,bregma,1.5,-2.3,0,1,10,0,0,1,

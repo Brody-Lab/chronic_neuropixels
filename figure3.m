@@ -1,5 +1,8 @@
-% FIGURE3 make all the plots of the figure from
-% the pre-made CSV tables or from data being fetched online
+% FIGURE3 Make figure 3 from the manuscrip written by Luo, Bondy, et al.
+%
+% The figure shows that while tethered for Neuropixel recording without a
+% cable commutator, rats perform a cognitively demanding task at a level
+% similar to when they are untethered
 %
 %=OPTIONAL INPUT
 %

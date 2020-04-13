@@ -57,5 +57,3 @@ end
 
 %% since Adrian's and Thomas' cells files have slightly different fields, concatenate into a cell array, not a struct array
 Cells = [num2cell(Cells_AGB) num2cell(Cells_TZL)];
-
-%% 

@@ -35,17 +35,43 @@ function [] = make_recording_sessions_table()
     dates = {'2020-02-11'};
     T = add_to_table(T, 'A249', dates);
     %K265
-    T = add_to_table(T, 'K265', '2019-05-27');
+    dates = {'2019-05-27'; 
+             '2019-05-28'; 
+             '2019-05-23'};
+    T = add_to_table(T, 'K265', dates);
+    %T170
+    T = add_to_table(T, 'T170', {'2018-04-12'; 
+                                 '2018-04-13';
+                                 '2018-04-16'; 
+                                 '2018-04-20';});
     %T173
     T = add_to_table(T, 'T173', '2018-04-16');
     %T176
     Pharma = PB_import_pharmacology_log;
     idx = Pharma.Rat == 'T176' & Pharma.Manipulation == 'saline';
     T = add_to_table(T, 'T176', Pharma.Date(idx));
+    % T179
+    T = add_to_table(T, 'T179', {'2019-03-12';
+                                 '2019-03-18'; 
+                                 '2019-03-19';
+                                 '2019-03-20';
+                                 '2019-03-21';
+                                 '2019-03-22';});
     %T181
     OE = PB_import_opto_ephys_log('T181');
     dates = OE.T181.Date;
     T = add_to_table(T, 'T181', dates);
+    %T182
+    OE = PB_import_opto_ephys_log('T182');
+    dates = OE.T182.Date;
+    T = add_to_table(T, 'T182', dates);
+    %T196
+    T = add_to_table(T, 'T196', {'2019-04-24';
+                                 '2019-05-09';});
+    %T209
+    T = add_to_table(T, 'T209', {'2019-05-22';
+                                 '2019-05-23';
+                                 '2019-05-24';});
     %T212
     dates = {'8/9/2019';...
              '8/13/2019';...
@@ -64,14 +90,19 @@ function [] = make_recording_sessions_table()
      % T224
      dates = {'2020-01-03'};
      T = add_to_table(T, 'T224', dates);
+      % T227
+     dates = {'2020-02-18'; 
+              '2020-02-19'; 
+              '2020-02-20'; 
+              '2020-02-21'; 
+         };
+     T = add_to_table(T, 'T227', dates);
      % T249
      dates = {'2020-02-11';...
              '2020-02-12'};
      T = add_to_table(T, 'T249', dates);
      % save
      writetable(struct2table(T), P.recording_sessions_path)
-%      rmpath(genpath(P.tzluo_path))
-%      fprintf('Removed the TZLUO repository to the search path.\n')
 end
 %% ADD_TO_TABLE
 % add dates to a tabular structure

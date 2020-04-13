@@ -1,3 +1,18 @@
+% GET_DETAILS_OF_RECORDINGS_INVENTORY get information on the sorted data
+% files
+%
+%=INPUT
+%   
+%   T
+%      A table listing the recordings with minimal information
+%
+%   sorted_data_path
+%       path to the folder that contains all the spikesorted data
+%
+%=OUTPUT
+%
+%   T
+%       A table listing the recordings with more information
 function T = get_details_of_recordings_inventory(T, sorted_data_path)
 
 n_sessions = size(T,1);
