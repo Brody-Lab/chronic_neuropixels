@@ -4,9 +4,8 @@
 %
 %=INPUT
 %
-%   Cells
-%       A cel array of structures made by COLLECT_CELL_FILES and
-%       POSTPROCESS_CELLS
+%   T
+%       A table made from GET_METRICS_FROM_CELLS
 %
 %=OPTIONAL INPUT
 %
@@ -17,10 +16,6 @@
 %   axes
 %       An AXES objects where the plot will be made. If empty(default),
 %       then a new figureis created.
-%
-%   condition_on
-%       A char array specifying the different conditions used for
-%       averaging. The option are {'bank', 'ML', 'AP', 'DV'}.
 %
 %   FaceAlpha
 %       A scalar value between 0 and 1 that specifies the opacity of the
@@ -42,8 +37,7 @@
 %
 %   normalize_by_electrodes
 %       A scalar logical specifying whether to normalize neuronal metrics
-%       by the number of electrodes that satisfy the same condition. This
-%       is should be turned on CONDITION_ON is not empty
+%       by the number of electrodes that satisfy the same condition. 
 %
 %   print_sample_size
 %       Logical scalar indiating whether to show the sample sizes in the
@@ -52,7 +46,11 @@
 %   ylabel_on
 %       A scalar logical specifying whether to show the ylabel
 %       
-function [] = plot_average_stability(T, varargin)
+%=OPTIONAL OUTPUT
+%   
+%   hdl
+%       The handles of the shadecolorbar objects.
+function [varargout] = plot_average_stability(T, varargin)
 parseobj = inputParser;
 addParameter(parseobj, 'axes', [], @(x) isempty(x) || isa(x,  'matlab.graphics.axis.Axes'));
 addParameter(parseobj, 'color_order_offset', 0, @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer'}))
@@ -70,12 +68,7 @@ addParameter(parseobj, 'ylabel_on', true, @(x) isscalar(x) && islogical(x));
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
 P = get_parameters;
-t_bin_edges = P.longevity_time_bin_edges;
-t_bin_centers = P.longevity_time_bin_centers;
-n_boots = P.longevity_n_boots;
 y_label = P.text.(P_in.metric);
-% T=T(T.days_elapsed>0,:);
-% T.days_elapsed = T.days_elapsed + 1;
 %% normalize by electrodes
 if numel(unique(T.condition)) > 1 && ~P_in.normalize_by_electrodes
     P_in.normalize_by_electrodes=true;
@@ -90,25 +83,6 @@ end
 if P_in.metric == "event_rate"
     y_label = [y_label, ' (Hz)'];
 end
-%% Model
-switch P_in.fit_type
-    case 'power'
-        modelfun = @(b,x) b(1)*x.^b(2);
-        b0=[1,-0.5, 1, -0.1];
-        if ~P_in.normalize_by_electrodes
-            b0(1)=600;
-        end
-    case 'exponential'
-        modelfun = @(b,x) b(1)*exp(b(2)*(x)) + b(3); % + b(3)*exp(b(4)*x);
-        b0=[10,-2,0.5,-0.001];
-    case 'log'
-        modelfun = @(b,x) b(1) + b(2)*log(x) + b(3) + b(4)*log(x);
-        b0=[1, -2, 1,-2];
-end
-if ~P_in.normalize_by_electrodes
-    b0([1,3])=300;
-end
-opts = statset('nlinfit');
 %% Plot
 if isempty(P_in.axes)
     figure('Position', P.figure_position_longevity);
@@ -118,24 +92,21 @@ end
 set(gca, P.axes_properties{:})
 set(gca, P.custom_axes_properties.longevity{:});
 condition_names = get_condition_names(T);
-clear boots
 for i = 1:numel(unique(T.condition))
     fprintf('\n"%s" Condition %i, %s', P_in.metric, i, condition_names{i});
-    boots = nan(n_boots,numel(t_bin_centers));
-    for j=1:numel(t_bin_centers)
-        idx = T.days_elapsed>=t_bin_edges(j) & T.days_elapsed<t_bin_edges(j+1) & ...
-              T.condition==i;
+    bootstat = nan(P.longevity_n_boots,max(T.days_bin));
+    for j=1:max(T.days_bin)
+        idx = T.condition==i & T.days_bin==j;
         if sum(idx) > 1
-            boots(:,j) = bootstrp(n_boots,@mean,metric(idx(:)));
+            bootstat(:,j) = bootstrp(P.longevity_n_boots,@mean,metric(idx(:)));
         elseif sum(idx)==1
-            boots(1:n_boots,j) = metric(idx(:));
+            bootstat(:,j) = metric(idx(:));
         else
             continue
         end
         N(j) = sum(idx); % smaple size
     end
-    hdl(i)=shadedErrorBar(t_bin_centers, boots,{@nanmean,@nanstd});
-%     hdl(i)=shadedErrorBar(t_bin_centers,avg, err);
+    hdl(i)=shadedErrorBar(P.longevity_time_bin_centers, bootstat,{@nanmean,@nanstd});
     hold on;
     hdl(i).mainLine.LineWidth=1;
     hdl(i).mainLine.LineStyle = '-';
@@ -160,18 +131,8 @@ for i = 1:numel(unique(T.condition))
             idx_nan = isnan(x)|isnan(y);
             x =x(~idx_nan);
             y=y(~idx_nan);
-            [p_hat, p_CI] = fit_exp_decay(x,y);
+            p_hat = fit_sum_2_exp_decay(x,y);
             plot(x, sum_2_exp_decay(x,p_hat), '--', 'Color', the_color, 'linewidth', 1)
-            for j = 1:4
-                fprintf('\n        p(%i) = %0.2f [%0.2f, %0.2f]', ...
-                        j, p_hat(j), p_CI(1,j), p_CI(2,j))
-            end
-        case {'power', 'log'}
-            x = T.days_elapsed(T.condition==i);
-            y = metric(T.condition==i);
-            beta = nlinfit(x,y, modelfun, b0, 'errormodel', 'proportional');
-            x = 2.^(-1:0.1:10);
-            plot(x, modelfun(beta, x), '--', 'Color', the_color, 'linewidth', 1)
     end
     % display sample sizes
     if P_in.print_sample_size
@@ -196,4 +157,7 @@ ylim([0,1].*ylim)
 xlabel('Days since implant')
 if P_in.ylabel_on
     ylabel(y_label); 
+end
+if nargout > 0
+    varargout{1} = hdl;
 end

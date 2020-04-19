@@ -21,22 +21,24 @@ k = 0;
 n_col = 4;
 n_row = 4;
 label_offset = 0;
+show_fit = true;
+ax_hdl={};
 %% Plot individual recordings
 for region = {'mFC', 'MCtx_ADS', 'AVS'}
     k = k + 1;
-    ax_hdl(k) = subplot(n_row, n_col,k);
+    ax_hdl{k} = subplot(n_row, n_col,k);
     plot_indiv_recordings(Cells, region{:}, ...
                           'metric', 'n_good_units', ...
                           'axes', gca,...
                           'ylabel_on', mod(k, n_col)==1);
 end
 % shift the plots right and above
-inter_axes_dx = ax_hdl(1).Position(1) + ax_hdl(2).Position(1);
+inter_axes_dx = ax_hdl{1}.Position(1) + ax_hdl{2}.Position(1);
 dx = inter_axes_dx/(n_col-1)/2;
 for i = 1:3
-    ax_hdl(i).Position(1)=ax_hdl(i).Position(1)+dx;
-    ax_hdl(i).OuterPosition(2) = ax_hdl(i).OuterPosition(2) + 0.03;
-    label_panel(ax_hdl(i), P.panel_labels(i), 'FontSize', P.panel_label_font_size);
+    ax_hdl{i}.Position(1)=ax_hdl{i}.Position(1)+dx;
+    ax_hdl{i}.OuterPosition(2) = ax_hdl{i}.OuterPosition(2) + 0.03;
+    label_panel(ax_hdl{i}, P.panel_labels(i), 'FontSize', P.panel_label_font_size);
 end
 % move on to the next row
 k=k+1;
@@ -47,14 +49,14 @@ fprintf('\nANOVA with the factor days since implants and for data > 7 days:')
 for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
     k = k +     1;
     subplot(n_col, n_row,k);
-    if any(strcmp(metric{:}, {'unit', 'single_unit'}))
+    if any(strcmp(metric{:}, {'unit', 'single_unit'})) && show_fit
         fit_type = 'exponential';
     else
         fit_type='';
     end
-    fit_type='';
     plot_average_stability(T, 'metric', metric{:}, ...
                               'axes', gca, ...
+                              'print_sample_size', mod(k,n_col)==1, ...
                               'fit_type', fit_type);
     label_panel(gca, P.panel_labels(k+label_offset), 'FontSize', P.panel_label_font_size);
     title(P.text.(metric{:}))
@@ -64,9 +66,7 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
 end
 fprintf('\n')
 %% Plot average, conditioned on DV
-DV_bin_edges = [-10, -2,  -1,  0];
-T = get_metrics_from_Cells(Cells, 'condition_on', 'DV', ...
-                                  'DV_bin_edges', DV_bin_edges);
+T = get_metrics_from_Cells(Cells, 'condition_on', 'DV');
 for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
     k = k + 1;
     subplot(n_col, n_row,k);
@@ -75,7 +75,6 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
     else
         fit_type='';
     end
-    fit_type='';
     plot_average_stability(T, 'metric', metric{:}, ...
                               'fit_type', fit_type, ...
                                   'legend_on', false, ...
@@ -85,8 +84,8 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
                                   'axes', gca);
     label_panel(gca, P.panel_labels(k+label_offset), 'FontSize', P.panel_label_font_size);
     % Report the stats from the ANOVA
-    Pval.(metric{:}) = anova_DV_shank(Cells, 'DV_bin_edges', DV_bin_edges, ...
-                                                     'EI_bin_edges', [1, 385, 769], ...
+    Pval.(metric{:}) = anova_DV_shank(Cells, 'DV_bin_edges', P.DV_bin_edges, ...
+                                              'EI_bin_edges', P.EI_bin_edges, ...
                                                      'metric', metric{:});
     fprintf('\nANOVA with factors 1)bank and 2)DV on the change in %s:', metric{:});
     fprintf('\n    bank: p = %0.3f', Pval.(metric{:})(1));
@@ -105,7 +104,6 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
     else
         fit_type='';
     end
-    fit_type='';
     plot_average_stability(T, 'metric', metric{:}, ...
                                  'fit_type', fit_type, ...
                                   'color_order_offset', 3, ...

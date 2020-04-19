@@ -36,6 +36,10 @@
 %       If CONDITION_ON includes 'DV', then this increasing vector
 %       specifies the bin edges for binning DV positions
 %
+%   exclude_holderless
+%       A logical scalar specifying whether exclude animals implanted
+%       without a holder
+%
 %   EI_bin_edges
 %       If CONDITION_ON includes 'electode_index', then this increasing
 %       vector specifies the bin edges for binning electrode indices. An
@@ -47,8 +51,9 @@
 %       If CONDITION_ON includes 'ML', then this increasing vector
 %       specifies the bin edges for binning ML positions
 function T = get_metrics_from_Cells(Cells, varargin)
+P = get_parameters;
 parseobj = inputParser;
-addParameter(parseobj, 'AP_bin_edges', [-8, 0, 4], ...
+addParameter(parseobj, 'AP_bin_edges', P.AP_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
 addParameter(parseobj, 'brain_area', '', @(x) iscell(x)||ischar(x)||isstring(x))
 addParameter(parseobj, 'condition_on', '', @(x) any(ismember(x, {'electrode_index', ...
@@ -56,15 +61,15 @@ addParameter(parseobj, 'condition_on', '', @(x) any(ismember(x, {'electrode_inde
                                                              'AP', ...
                                                              'DV', ...
                                                              'brain_area'})))
-addParameter(parseobj, 'DV_bin_edges', [-10, -2, -1, 0], ...
+addParameter(parseobj, 'DV_bin_edges', P.DV_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
-addParameter(parseobj, 'EI_bin_edges', [1 193, 385, 577, 768], ...
+addParameter(parseobj, 'EI_bin_edges', P.EI_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
-addParameter(parseobj, 'ML_bin_edges', [0 2,6], ...
+addParameter(parseobj, 'ML_bin_edges', P.ML_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
+addParameter(parseobj, 'exclude_holderless', true, @(x) isscalar(x) && islogical(x))
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
-P = get_parameters;
 %% Create the bin edges for conditions that aren't used
 if ~contains(P_in.condition_on, 'AP')
     AP_bin_edges = [-inf, inf];
@@ -96,6 +101,10 @@ end
 %% Create the results table
 k = 0;
 for i = 1:numel(Cells)
+    if P_in.exclude_holderless && ...
+       (Cells{i}.rat=="T170"||Cells{i}.rat=="T173")
+        continue
+    end
     % bin cells for the i-th recording
     AP_bin_cells = discretize(Cells{i}.AP, AP_bin_edges);
     DV_bin_cells = discretize(Cells{i}.DV, DV_bin_edges);
@@ -194,4 +203,5 @@ for i = 1:numel(Cells)
     end
 end
 T.condition = findgroups(T.condition);
+T.days_bin = discretize(T.days_elapsed, P.longevity_time_bin_edges);
 T = struct2table(T);
