@@ -1,9 +1,6 @@
 % ANALYZE_PERFORMANCE_BY_RAT provides summary statistics for each
 % rat and each condition in BEHAVIOR_TABLE.CSV
 function [] = analyze_performance_by_rat()
-    P_input = inputParser;
-    parse(P_input, varargin{:});
-    P_input = P_input.Results;
     add_folders_to_path;
     P = get_parameters;
     fprintf('Fetching protocol data...')

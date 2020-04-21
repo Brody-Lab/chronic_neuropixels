@@ -1,7 +1,18 @@
 % MAKE_BEHAVIOR_TABLE Make a CSV table with information on the sessions
 % used for measuring performance, including session ID, date, rat name,
 % whether the rat was tethered for recording
-function [] = make_behavior_table()
+%
+%=OPTIONAL INPUT
+%
+%   exclude_holderless
+%       A logical scalar specifying whether exclude animals implanted
+%       without a holder
+function [] = make_behavior_table(varargin)
+    parseobj = inputParser;
+    addParameter(parseobj, 'exclude_holderless', true, @(x) isscalar(x) && islogical(x))
+    parse(parseobj, varargin{:});
+    P_in = parseobj.Results;
+    
     add_folders_to_path;
     P = get_parameters;
     Rat_info = readtable(P.rat_info_path);
@@ -11,6 +22,10 @@ function [] = make_behavior_table()
     T.date = datetime.empty;
     Rec_sess = readtable(P.recording_sessions_path);
     for i = 1:numel(Rat_info.rat_name)
+        if P_in.exclude_holderless && ...
+           (Rat_info.rat_name{i}=="T170"||Rat_info.rat_name{i}=="T173")
+            continue
+        end
         dates_tethered = Rec_sess.date(strcmp(Rec_sess.rat, Rat_info.rat_name{i}));
         % add the sessids for the dates when the rat was tethered
         date_char = concatenate_for_sql(datetime(dates_tethered));

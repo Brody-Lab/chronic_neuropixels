@@ -39,6 +39,7 @@ if ~isfolder(P.data_folder_path)
 end
 P.choice_sel_mat_path = [P.data_folder_path filesep 'choice_modulation.mat'];
 P.Cells_path = [P.data_folder_path filesep 'Cells.mat'];
+P.figure2_supp3_data_path = [P.data_folder_path filesep 'figure2_supp3_data.mat'];
 %% analyses
 P.noise_threshold_uV = 20;
 P.gain_noise_example.implanted = 'gain_noise_17131311352_2019_10_09';
@@ -53,6 +54,10 @@ P.n_boots = 1000;
 P.choice_sel_reference_event = 'cpoke_out';
 P.choice_sel_steps_s = -1:0.02:0.5;
 P.choice_sel_bin_s = 0.1;
+P.AP_bin_edges = [-8, 0, 4];
+P.DV_bin_edges = [-10, -2,  -1,  0];
+P.EI_bin_edges = [1, 385, 769];
+P.ML_bin_edges = [0 2,6];
 %% plotting formats
 P.figure_image_format = {'png', 'svg'};
 P.figure_position_psychometrics = [rand*1000, rand*1000, 250, 250];
@@ -82,8 +87,7 @@ P.custom_axes_properties.sens = {'XLim', [0, 0.3], ...
 P.custom_axes_properties.longevity = {'xscale','log',...
                                       'xlim',[min(P.longevity_time_bin_edges), ...
                                               max(P.longevity_time_bin_edges)],...
-                                      'xtick',P.longevity_time_bin_centers, ...
-                                      'fontsize', 12};
+                                      'xtick',P.longevity_time_bin_centers};
 P.color_order = 1/255 *  [230,  25,  75; ...
                                60, 180,  75; ...
                               ...255, 225,  25; ...

@@ -24,17 +24,23 @@ n_col = 4;
 n_row = 1;
 label_offset = 0;
 T = get_metrics_from_Cells(Cells, 'condition_on', 'brain_area', ...
-                                  'brain_area', {{'PrL', 'MO'}, {'other'}});
+                                  'brain_area', {{'other'},{'PrL', 'MO'}});
 for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
     k = k + 1;
     subplot(n_row, n_col,k);
-    plot_average_stability(T, 'metric', metric{:}, ...
+    hdl = plot_average_stability(T, 'metric', metric{:}, ...
+                            'print_sample_size', mod(k,n_col)==1, ...
                               'axes', gca, ...
+                              'legend_on', mod(k,n_col)==1, ...
                               'fit_type', '');
+    hdl(1).mainLine.Color=zeros(1,3);
+    hdl(1).patch.FaceColor=zeros(1,3);
     label_panel(gca, P.panel_labels(k+label_offset), 'FontSize', P.panel_label_font_size);
     title(P.text.(metric{:}))
+    lgd=findobj(gcf, 'Type', 'Legend');
+    lgd.String = {'mPFC', 'Other regions'};
 end
 %% Save
 for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.plots_folder_path filesep 'figure_compare_mPFC'], P.figure_image_format{i})
+    saveas(gcf, [P.plots_folder_path filesep 'figure2_supp1'], P.figure_image_format{i})
 end
