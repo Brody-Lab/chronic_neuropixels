@@ -31,11 +31,11 @@ P.choice_sel_file_names = {'T212_2019_08_14'; ...
 %% paths to folders to be ignored by git
 P.plots_folder_path = [P.repository_path filesep 'plots'];
 if ~isfolder(P.plots_folder_path)
-    mkdir(plots_folder_path);
+    mkdir(P.plots_folder_path);
 end
 P.data_folder_path = [P.repository_path filesep 'data'];
 if ~isfolder(P.data_folder_path)
-    mkdir(data_folder_path);
+    mkdir(P.data_folder_path);
 end
 P.choice_sel_mat_path = [P.data_folder_path filesep 'choice_modulation.mat'];
 P.Cells_path = [P.data_folder_path filesep 'Cells.mat'];
