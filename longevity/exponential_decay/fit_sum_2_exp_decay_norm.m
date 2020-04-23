@@ -71,7 +71,6 @@ function [p_hat, p_CI, LL, p_boot, exit_flag] = fit_sum_2_exp_decay_norm(x,y, va
     x = x - x0;
     p0 = [0.5, 0.5, 100];
     if P_in.n_boot > 0
-        n = numel(x);
         ind_init = find(x==x0);
         ind_subseq = find(x>x0);
         n_init = numel(ind_init);
@@ -81,7 +80,6 @@ function [p_hat, p_CI, LL, p_boot, exit_flag] = fit_sum_2_exp_decay_norm(x,y, va
         fprintf('\nFitting %i bootstrap draws...', P_in.n_boot); tic
         while i <= P_in.n_boot
             idx = [datasample(ind_init,n_init);datasample(ind_subseq,n_subseq)];
-            idx = datasample(1:n, n);
             xboot = x(idx);
             yboot = y(idx);
             [p_minNegLL,~,exit_flag] = ...

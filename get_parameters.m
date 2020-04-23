@@ -39,7 +39,7 @@ if ~isfolder(P.data_folder_path)
 end
 P.choice_sel_mat_path = [P.data_folder_path filesep 'choice_modulation.mat'];
 P.Cells_path = [P.data_folder_path filesep 'Cells.mat'];
-P.figure2_supp3_data_path = [P.data_folder_path filesep 'figure2_supp3_data.mat'];
+P.exp_decay_data_path = [P.data_folder_path filesep 'exp_decay_data.mat'];
 %% analyses
 P.noise_threshold_uV = 20;
 P.gain_noise_example.implanted = 'gain_noise_17131311352_2019_10_09';
@@ -49,15 +49,23 @@ P.longevity_log2_time_bin_edges = -0.5:7.5;
 P.longevity_time_bin_edges = 2.^(P.longevity_log2_time_bin_edges);
 P.longevity_log2_time_bin_centers = P.longevity_log2_time_bin_edges(1:end-1)+diff(P.longevity_log2_time_bin_edges)/2;
 P.longevity_time_bin_centers = 2.^(P.longevity_log2_time_bin_centers);
+P.longevity_metrics = {'unit', ...
+                       'single_unit', ...
+                       'event_rate', ...
+                       'Vpp', ...
+                       'frac_single'};
 P.longevity_n_boots = 1000;
+P.exp_decay_n_boots = 1000;
+P.exp_decay_regressors = {'AP', 'DV', 'ML', 'SVP', 'SPA'};
 P.n_boots = 1000;
 P.choice_sel_reference_event = 'cpoke_out';
 P.choice_sel_steps_s = -1:0.02:0.5;
 P.choice_sel_bin_s = 0.1;
 P.AP_bin_edges = [-8, 0, 4];
-P.DV_bin_edges = [-10, -2,  -1,  0];
-P.EI_bin_edges = [1, 385, 769];
-P.ML_bin_edges = [0 2,6];
+P.DV_bin_edges = [-10, -2,   0];
+P.EI_bin_edges = [1, 193, 385, 577, 769];
+P.ML_bin_edges = [0 1 4];
+P.brain_area_groups = {{'PrL', 'MO'}, {'other'}};
 %% plotting formats
 P.figure_image_format = {'png', 'svg'};
 P.figure_position_psychometrics = [rand*1000, rand*1000, 250, 250];
@@ -116,5 +124,13 @@ P.panel_label_pos = [0.1, 0.9, 0.1, 0.1];
 P.panel_labels = char(65:90);
 P.text.unit = 'Units';
 P.text.single_unit = 'Single units';
+P.text.frac_single = 'Fraction single units';
 P.text.event_rate = 'Event rate';
 P.text.Vpp = 'Peak-to-peak amplitude (uV)';
+P.text.AP = 'AP';
+P.text.DV = 'DV';
+P.text.ML = 'ML';
+P.text.AP = 'AP';
+P.text.DV = 'DV';
+P.text.SVP = 'Shank\newline  pos.';
+P.text.SPA = 'Shank\newline  ori.';

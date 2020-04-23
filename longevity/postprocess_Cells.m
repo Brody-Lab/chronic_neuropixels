@@ -1,6 +1,11 @@
 % POSTPROCESS_CELLS A script for calculating various metrics for Cells
 % after collecting the Cells files
-
+%% A230's AP coordnate got messed up
+for i = 1:length(Cells)
+    if Cells{i}.rat=="A230"
+        Cells{i}.AP = 0.8 * ones(size(Cells{i}.AP));
+    end
+end
 %% Standardize the datetime format
 for i = 1:length(Cells)
     if isdatetime(Cells{i}.sess_date)
@@ -118,4 +123,13 @@ for i = 1:numel(Cells)
     region_names = Cells{i}.region_names(:);
     region_names(cellfun(@isempty, region_names)) = {''};
     Cells{i}.region_names = string(region_names);
+end
+%% probe shank plane orientation
+for i = 1:numel(Cells)
+    switch Cells{i}.rat
+        case {'A230', 'A241', 'A242', 'A243', 'T181', 'T182'}
+            Cells{i}.shank_plane = "sagittal";
+        otherwise
+            Cells{i}.shank_plane = "coronal";
+    end
 end

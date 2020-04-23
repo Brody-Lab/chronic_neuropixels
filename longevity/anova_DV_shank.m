@@ -39,22 +39,23 @@
 %       used for the ANOVA
 function [pval, T2] = anova_DV_shank(Cells, varargin)
 parseobj = inputParser;
-addParameter(parseobj, 'DV_bin_edges', [-10, -2, -1,  0], ...
+addParameter(parseobj, 'DV_bin_edges', [-10, -2, 0], ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
-addParameter(parseobj, 'EI_bin_edges', [1 193, 385, 577, 768], ...
+addParameter(parseobj, 'EI_bin_edges', [1 577 768], ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
 addParameter(parseobj, 'metric', 'unit', @(x) ismember(x, {'unit', ...
                                                            'single_unit', ...
                                                            'event_rate', ...
                                                            'Vpp'}))
-addParameter(parseobj, 'min_elec', 10, @(x) isscalar(x) && isnumeric(x));                                   
+addParameter(parseobj, 'min_elec', 1, @(x) isscalar(x) && isnumeric(x));                                   
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
 P = get_parameters;
 
 T = get_metrics_from_Cells(Cells, 'condition_on', {'DV', 'electrode_index'}, ...
                                   'DV_bin_edges', P_in.DV_bin_edges, ...
-                                  'EI_bin_edges', P_in.EI_bin_edges);
+                                  'EI_bin_edges', P_in.EI_bin_edges, ...
+                                  'x0', 0);
 if strcmp(P_in.metric, 'Vpp')
     T.metric_norm = T.Vpp;
 else
@@ -71,7 +72,8 @@ for i_EI = 1:numel(P_in.EI_bin_edges)-1
           T.i_DV == i_DV & ...
           T.i_EI == i_EI;
     idx_early = idx & T.days_elapsed <= 7;
-    idx_late = idx & T.days_elapsed > 28 & T.days_elapsed < 141;
+    idx_late = idx & T.days_elapsed > 14 & T.days_elapsed < 141;
+    idx_late = idx & T.days_elapsed > 7;
     if sum(idx_early)==0 || sum(idx_late)==0
         continue
     end
@@ -89,4 +91,4 @@ end
 T2=struct2table(T2);
 T2 = T2(~isnan(T2.metric_change),:);
 %% Do the ANOVA
-pval = anovan(T2.metric_change, {T2.i_EI, T2.i_DV}, 'continuous', [1,2], 'display', 'off');
+pval = anovan(T2.metric_change, {T2.i_EI, T2.i_DV}, 'continuous', [], 'display', 'off');

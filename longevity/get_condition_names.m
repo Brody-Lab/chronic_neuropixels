@@ -48,6 +48,12 @@ else
             txt = [txt ' ' unique_cond{j}];
         end
         
+        unique_cond = unique(T.shank_plane);
+        if numel(unique(T.i_SP))>1
+            j = unique(T.i_SP(T.condition==i));
+            txt = [txt ' ' unique_cond{j}];
+        end
+        
         condition_names{i} = txt(2:end);
     end
 end

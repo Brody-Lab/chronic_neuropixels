@@ -52,22 +52,21 @@
 %       The handles of the shadecolorbar objects.
 function [varargout] = plot_average_stability(T, varargin)
 parseobj = inputParser;
+P = get_parameters;
 addParameter(parseobj, 'axes', [], @(x) isempty(x) || isa(x,  'matlab.graphics.axis.Axes'));
 addParameter(parseobj, 'color_order_offset', 0, @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer'}))
 addParameter(parseobj, 'fit_type', 'power', @(x) ischar(x))
 addParameter(parseobj, 'legend_on', true, @(x) isscalar(x) && islogical(x));
-addParameter(parseobj, 'metric', 'unit', @(x) ismember(x, {'unit', ...
-                                                           'single_unit', ...
-                                                           'event_rate', ...
-                                                           'Vpp'}))
+addParameter(parseobj, 'metric', 'unit', @(x) all(ismember(x, P.longevity_metrics)))
 addParameter(parseobj, 'normalize_by_electrodes', false, @(x) islogical(x)&&isscalar(x))
+addParameter(parseobj, 'normalize_initial_value', false, @(x) islogical(x)&&isscalar(x))
 addParameter(parseobj, 'FaceAlpha', 0.2, ...
     @(x) validateattributes(x, {'numeric'}, {'scalar', '>=', 0, '<=', 1}))
 addParameter(parseobj, 'print_sample_size', false, @(x) islogical(x)&&isscalar(x))
+addParameter(parseobj, 'x0', min(P.longevity_time_bin_centers), @(x) isscalar(x));
 addParameter(parseobj, 'ylabel_on', true, @(x) isscalar(x) && islogical(x));
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
-P = get_parameters;
 y_label = P.text.(P_in.metric);
 %% normalize by electrodes
 if numel(unique(T.condition)) > 1 && ~P_in.normalize_by_electrodes
@@ -82,6 +81,10 @@ else
 end
 if P_in.metric == "event_rate"
     y_label = [y_label, ' (Hz)'];
+end
+if P_in.normalize_initial_value
+    y_label(1) = lower(y_label(1));
+    y_label = ['Norm. ' y_label];
 end
 %% Plot
 if isempty(P_in.axes)
@@ -106,12 +109,16 @@ for i = 1:numel(unique(T.condition))
         end
         N(j) = sum(idx); % smaple size
     end
+    if P_in.normalize_initial_value
+        y0 = mean(metric(T.condition==i & T.days_elapsed == P_in.x0));
+        bootstat = bootstat/y0;
+    end
     hdl(i)=shadedErrorBar(P.longevity_time_bin_centers, bootstat,{@nanmean,@nanstd});
     hold on;
     hdl(i).mainLine.LineWidth=1;
     hdl(i).mainLine.LineStyle = '-';
     hdl(i).mainLine.Marker = 'o';
-    hdl(i).patch.FaceAlpha=P_in.FaceAlpha;
+    
     if numel(unique(T.condition)) == 1
         the_color = [0,0,0];
     else
@@ -119,20 +126,28 @@ for i = 1:numel(unique(T.condition))
         the_color = P.color_order(clr_idx,:);
     end
     hdl(i).mainLine.Color = the_color;
-    hdl(i).patch.FaceColor = the_color;
+    if ~isempty(hdl(i).patch)
+        hdl(i).patch.FaceAlpha=P_in.FaceAlpha;
+        hdl(i).patch.FaceColor = the_color;
+    end
     % display power law fit
     switch P_in.fit_type
         case 'exponential'
-            [x,sort_idx] = sort(T.days_elapsed(T.condition==i));
-            y = metric(T.condition==i);
+            idx = T.condition==i & T.days_elapsed>=P_in.x0;
+            [x,sort_idx] = sort(T.days_elapsed(idx));
+            y = metric(idx);
             y=y(sort_idx);
             x=double(x);
             y=double(y);
             idx_nan = isnan(x)|isnan(y);
             x =x(~idx_nan);
             y=y(~idx_nan);
-            p_hat = fit_sum_2_exp_decay(x,y);
-            plot(x, sum_2_exp_decay(x,p_hat), '--', 'Color', the_color, 'linewidth', 1)
+            p_hat = fit_sum_2_exp_decay(x,y, 'n_boot', 0);
+            y_hat = sum_2_exp_decay(x,p_hat);
+            if P_in.normalize_initial_value
+                y_hat = y_hat/mean((y_hat(x == P_in.x0)));
+            end
+            plot(x, y_hat, ':', 'Color', the_color, 'linewidth', 2)
     end
     % display sample sizes
     if P_in.print_sample_size
@@ -146,8 +161,9 @@ for i = 1:numel(unique(T.condition))
     steady_boot = bootstrp(1e4, @(x) mean(x), steady_state(:)); %
     steady2early = steady_boot./early_boot;
     fprintf('\n    Ratio of %s >14 days after implantation to its initial value: %0.2f [%0.2f, %0.2f]', ...
-        P_in.metric, median(steady2early), quantile(steady2early, 0.025), quantile(steady2early, 0.975))
-    end
+    P_in.metric, median(steady2early), quantile(steady2early, 0.025), quantile(steady2early, 0.975))
+end
+fprintf('\n')
 if numel(unique(T.condition))>1 && P_in.legend_on
     % flipping so that for comparing among DV positions, the most
     % superficial bin is listed first.

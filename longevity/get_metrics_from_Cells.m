@@ -50,16 +50,22 @@
 %   ML_bin_edges
 %       If CONDITION_ON includes 'ML', then this increasing vector
 %       specifies the bin edges for binning ML positions
+%
+%   x0
+%       The first day to include.
 function T = get_metrics_from_Cells(Cells, varargin)
 P = get_parameters;
 parseobj = inputParser;
 addParameter(parseobj, 'AP_bin_edges', P.AP_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
-addParameter(parseobj, 'brain_area', '', @(x) iscell(x)||ischar(x)||isstring(x))
-addParameter(parseobj, 'condition_on', '', @(x) any(ismember(x, {'electrode_index', ...
+addParameter(parseobj, 'brain_area', P.brain_area_groups, @(x) iscell(x)||ischar(x)||isstring(x))
+addParameter(parseobj, 'condition_on', '', @(x) any(ismember(x, {'', ...
+                                                             'electrode_index', ...
+                                                             'EI', ...
                                                              'ML', ...
                                                              'AP', ...
                                                              'DV', ...
+                                                             'shank_plane', ...
                                                              'brain_area'})))
 addParameter(parseobj, 'DV_bin_edges', P.DV_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
@@ -68,6 +74,7 @@ addParameter(parseobj, 'EI_bin_edges', P.EI_bin_edges, ...
 addParameter(parseobj, 'ML_bin_edges', P.ML_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
 addParameter(parseobj, 'exclude_holderless', true, @(x) isscalar(x) && islogical(x))
+addParameter(parseobj, 'x0', min(P.longevity_time_bin_centers), @(x) isscalar(x) && isnumeric(x))
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
 %% Create the bin edges for conditions that aren't used
@@ -86,7 +93,8 @@ if ~contains(P_in.condition_on, 'ML')
 else
     ML_bin_edges = P_in.ML_bin_edges;
 end
-if ~contains(P_in.condition_on, 'electrode_index')
+if ~any(contains(P_in.condition_on, 'electrode_index')) && ...
+   ~any(contains(P_in.condition_on, 'EI'))
     EI_bin_edges = [0, 960];
 else
     EI_bin_edges = P_in.EI_bin_edges;
@@ -98,11 +106,19 @@ else
     brain_area = cellfun(@(x) x(:)', P_in.brain_area, 'uni', 0);
     brain_area=brain_area(:)';
 end
+if ~any(contains(P_in.condition_on, 'shank_plane'))
+    shank_plane = "";
+else
+    shank_plane = ["coronal", "sagittal"];
+end
 %% Create the results table
 k = 0;
 for i = 1:numel(Cells)
     if P_in.exclude_holderless && ...
        (Cells{i}.rat=="T170"||Cells{i}.rat=="T173")
+        continue
+    end
+    if Cells{i}.days_since_surgery < P_in.x0
         continue
     end
     % bin cells for the i-th recording
@@ -124,8 +140,8 @@ for i = 1:numel(Cells)
             idx = any(Cells{i}.region_names(:)==brain_area{j}, 2);
             BA_bin_cells(idx)=j;
         end
-        
     end
+    SP_bin_cells = ones(size(Cells{i}.region_names));
     % bin electrodes for the i-th recording
     AP_bin_trode = discretize(Cells{i}.electrodes.AP, AP_bin_edges);
     DV_bin_trode = discretize(Cells{i}.electrodes.DV, DV_bin_edges);
@@ -146,6 +162,11 @@ for i = 1:numel(Cells)
             BA_bin_trode(idx)=j;
         end
     end
+    SP_bin_trode = ones(size(Cells{i}.electrodes.brain_area));
+    if numel(shank_plane) > 1
+        SP_bin_cells = SP_bin_cells + (Cells{i}.shank_plane=="coronal");
+        SP_bin_trode = SP_bin_trode + (Cells{i}.shank_plane=="coronal");
+    end
     % each row is a condition x recording
     c = 0; 
     for i_AP = 1:numel(AP_bin_edges)-1
@@ -153,17 +174,20 @@ for i = 1:numel(Cells)
     for i_ML = 1:numel(ML_bin_edges)-1
     for i_EI = 1:numel(EI_bin_edges)-1
     for i_BA = 1:numel(brain_area)
+    for i_SP = 1:numel(shank_plane)
         c=c+1;
         idx_cells = AP_bin_cells==i_AP & ...
                     DV_bin_cells==i_DV & ...
                     ML_bin_cells==i_ML & ...
                     EI_bin_cells==i_EI & ...
-                    BA_bin_cells==i_BA;
+                    BA_bin_cells==i_BA & ...
+                    SP_bin_cells==i_SP;
         idx_trode = AP_bin_trode==i_AP & ...
                     DV_bin_trode==i_DV & ...
                     ML_bin_trode==i_ML & ...
                     EI_bin_trode==i_EI & ...
-                    BA_bin_trode==i_BA;
+                    BA_bin_trode==i_BA & ...
+                    SP_bin_trode==i_SP;
         if sum(idx_trode)<1
             continue
         end
@@ -177,6 +201,7 @@ for i = 1:numel(Cells)
         T.i_ML(k,1) = i_ML;
         T.i_EI(k,1) = i_EI;
         T.i_BA(k,1) = i_BA;
+        T.i_SP(k,1) = i_SP;
         T.AP_edges(k,1:2) = AP_bin_edges(i_AP:i_AP+1);
         T.DV_edges(k,1:2) = DV_bin_edges(i_DV:i_DV+1);
         T.ML_edges(k,1:2) = ML_bin_edges(i_ML:i_ML+1);
@@ -196,12 +221,16 @@ for i = 1:numel(Cells)
         T.event_rate(k,1) = nansum(Cells{i}.fr(idx_cells));
         T.Vpp(k,1) = nanmean(Cells{i}.unitVppRaw(idx_cells));
         T.n_elec(k,1) = sum(idx_trode);
+        T.shank_plane(k,1) = string(Cells{i}.shank_plane);
+        T.probe_serial{k,1} = Cells{i}.probe_serial;
+    end
     end
     end
     end
     end
     end
 end
+T.frac_single = T.single_unit./T.unit;
 T.condition = findgroups(T.condition);
 T.days_bin = discretize(T.days_elapsed, P.longevity_time_bin_edges);
 T = struct2table(T);
