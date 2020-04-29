@@ -1,81 +1,53 @@
-% FIGURE4_SUPPLEMENT2 plots noise for all explanted probes, relative to
-% brain surface
+% figure4_supplement1 - analysis of correlation in RMS noise across banks
+
+%=OPTIONAL INPUT
 %
-function [] = figure4_supplement2()
-    %% load parameters and set some things up
-    P=get_parameters;
-    T= readtable(P.gain_noise_log_path);
-    is_explanted = T.date_explanted>datetime('2000-01-01');
-    ycoords = cumsum(repmat([20;0],384/2,1));   
-    ycoords = [ycoords;ycoords+3840;ycoords(1:192)+3840*2];
-    figure; set(gcf,'units','normalized','outerposition',[0.38 0.41 0.23 0.58]);
-    count=0;
-    explanted_idx = find(is_explanted);
-    [all_noise,all_distances]=deal([]);
-    % loop over explantations
-    for idx=1:(sum(is_explanted)+1)
-        count=count+1;
-        if idx>sum(is_explanted)
-            %% average across all probes at end            
-            edges = linspace(min(all_distances),max(all_distances),30);
-            bin_idx = discretize(all_distances,edges);
-            bin_mids = 0.5*(edges(1:end-1)+edges(2:end));
-            for i=1:(length(edges)-1)
-                vals(:,i) = bootstrp(1000,@(x)min(mean(x),100),all_noise(bin_idx==i));
-            end
-            in_brain = bin_mids<=0;
-            subplot(sum(is_explanted)+1,1,idx);
-            clear h;
-            for g=1:2
-                if g==1
-                    h(g)=shadedErrorBar(bin_mids(in_brain)/1e3,vals(:,in_brain),{@mean,@std}); hold on;
-                else
-                    h(g)=shadedErrorBar(bin_mids(~in_brain)/1e3,vals(:,~in_brain),{@mean,@std});                   
-                    h(g).mainLine.Color=[1 1 1]/2;
-                end
-                h(g).mainLine.LineWidth=1.5;
-            end
-            text(-9.8,75,sprintf('Average across probes'),'FontSize',11);      
-        else
-            %% load from table
-            i=explanted_idx(idx);
-            data_file_path = [P.gain_noise_fldr_path filesep T.recording_id{i} '.csv'];
-            D = readtable(data_file_path);    
-            distance_from_surface = ycoords - T.electrodes_implanted(i)*10;
-            all_distances = [all_distances;distance_from_surface(:)];
-            all_noise = [all_noise;D.noise_uV(:)];
-            subplot(sum(is_explanted)+1,1,idx);
-            in_brain = distance_from_surface<=0;
-            %% plot
-            for g=1:2
-                if g==1
-                    plot(distance_from_surface(in_brain)/1e3,min(D.noise_uV(in_brain),100),'.k');hold on   
-                else
-                    if any(~in_brain)
-                        h=plot(distance_from_surface(~in_brain)/1e3,min(D.noise_uV(~in_brain),100),'.');
-                        h.MarkerEdgeColor=[1 1 1]/2;
-                    end
-                end
-            end
-            text(-9.8,75,sprintf('probe %d\nexplanted %s',T.probe_sn(i),T.date_explanted(i)),'FontSize',8)    
-        end
-        %% make plots nice
-        set(gca,P.axes_properties{:},'yscale','linear','xlim',[-10 6],'ylim',[0 100],'xtick',-10:2:6,'xticklabel',[],...
-           'xgrid','on','ytick',[0   100],'yticklabel',{'0'   '\geq100'} );box off
-        yl=get(gca,'ylim');line([0 0],yl,'color','k','linewidth',1,'linestyle',':');set(gca,'ylim',yl);
-        if idx>sum(is_explanted)
-            xlabel('distance from brain surface, mm');
-            set(gca,'xticklabel',-10:2:6);
-        end
-        if i==4
-            ylabel({'Input-referred noise','(\muV_R_M_S)'});
-        elseif i==1
-            text(-5,55,{'In Brain'},'FontSize',16);
-            text(2,55,{'Above','Brain'},'FontSize',16,'Color',[0.5 0.5 0.5]);
-        end
-    end
-    %% save figure
-    for i = 1:numel(P.figure_image_format)
-        saveas(gcf, [P.plots_folder_path filesep 'figure4_supplement2'], P.figure_image_format{i});
-    end
+%   from_scratch
+%       logical scalar indicating whether the data will be fetched from
+%       bucket
+function[]=figure4_supplement2(varargin)
+P_input = inputParser;
+addParameter(P_input, 'from_scratch', false, @(x) isscalar(x) && islogical(x));
+addParameter(P_input, 'example_sn',17131311352);
+parse(P_input, varargin{:});
+P_input = P_input.Results;
+add_folders_to_path
+if P_input.from_scratch
+    get_gain_noise_data
+end
+P = get_parameters;
+figure; set(gcf,'units','normalized','outerposition',[0.38 0.41 0.37 0.55]);
+k = 0;
+n_col = 1;
+n_row = 2;
+label_x = 0;
+label_y = 1.2;
+
+
+k=k+1;
+subplot(n_col, n_row,k);
+plot_noise_all_probes('cmap_bounds',[0 50],'stat_func',@(x)min(median(x),50));
+label_hdl(k)=label_panel(gca, P.panel_labels(k), 'FontSize', P.panel_label_font_size);
+
+k=k+1;
+subplot(n_col, n_row,k);
+plot_noise_all_probes('cmap_bounds',[0 1],'stat_func',@(x)mean(x>20));
+label_hdl(k)=label_panel(gca, P.panel_labels(k), 'FontSize', P.panel_label_font_size);
+
+% standardize the inner positon
+children=get(gcf, 'Children');
+pos = cell2mat(arrayfun(@(x) get(x, 'Position'), children, 'uni', 0));
+pos(:,2) = mean(pos(:,2)); % lower left corner
+pos(:,4)= mean(pos(:,4)); % height
+for i = 1:numel(children)
+    set(children(i), 'Position', pos(i,:))
+end
+
+% standardize label position
+for i = 1:numel(label_hdl)
+    label_hdl(i).Position([2,4]) =  label_hdl(1).Position([2,4]);
+end
+
+for i = 1:numel(P.figure_image_format)
+    saveas(gcf, [P.plots_folder_path filesep 'figure4_supplement2'], P.figure_image_format{i})
 end

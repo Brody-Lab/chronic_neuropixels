@@ -8,30 +8,7 @@ parseobj = inputParser;
 addParameter(parseobj, 'axes', [], @(x) isempty(x) || isa(x,  'matlab.graphics.axis.Axes'));
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
-P=get_parameters;
-T= readtable(P.gain_noise_log_path);
-unique_probes = unique(T.probe_sn);
-n_probes = numel(unique_probes);
-days_implanted = cell(n_probes,1);
-T.cumul_days_implanted(isnan(T.cumul_days_implanted)) = 0;
-for i = 1:n_probes
-    idx = T.probe_sn == unique_probes(i);
-    days_implanted{i} = T.cumul_days_implanted(idx);
-    inds = find(idx);
-    for j = 1:numel(inds)
-        ind = inds(j);
-        data_file_path = [P.gain_noise_fldr_path filesep T.recording_id{ind} '.csv'];
-        D = readtable(data_file_path);
-        idx_electrodes = 1:T.electrodes_implanted(ind);
-        gain_median{i,1}(j,1) = median(D.gain(idx_electrodes));
-        gain_95{i,1}(j,1:2) = quantile(D.gain(idx_electrodes), [0.025, 0.975]);
-        noise_uV{i,1}{j,1} = D.noise_uV(idx_electrodes);
-        noise_uV_median{i,1}(j,1) = median(D.noise_uV(idx_electrodes));
-        noise_uV_95{i,1}(j,1:2) = quantile(D.noise_uV(idx_electrodes), [0.025, 0.975]);
-        frac_noisy{i,1}(j,1) = sum(D.noise_uV(idx_electrodes)>P.noise_threshold_uV)/numel(idx_electrodes);
-        days_implanted{i}(days_implanted{i}>200) = 200;
-    end
-end
+analyze_gain_noise_data;
 %% plot
 if isempty(P_in.axes)
     figure('Position', P.figure_position_gn_summary)
@@ -42,23 +19,32 @@ set(gca, P.axes_properties{:}, ...
          'XLim', [-10, 200], ...
          'Xtick', [0, 100, 200], ...
          'XTicklabel', {'0', '100', '\geq200'})
+
 for i =1:n_probes
-    hdl = plot(days_implanted{i}, noise_uV_median{i}, 'ko--', 'linewidth', 1);
+    if unique_probes(i)==17131312432
+        hdl = plot(days_implanted{i}, noise_uV_median{i},  'linewidth', 1,'markersize',6,'color','k');        
+        for z=1:length(days_implanted{i})
+            scatter(days_implanted{i}(z),noise_uV_median{i}(z),40,'markeredgecolor',P.explant_color_order{z},'markerfacecolor','none','linewidth',1);
+        end
+    else
+        hdl = plot(days_implanted{i}, noise_uV_median{i}, 'ko', 'linewidth', 1,'markersize',6,'linestyle','none');
+    end
     if days_implanted{i} == 0
         set(hdl, 'marker', '*');
-        hdl_new = hdl;
+        if unique_probes(i)~=17131312432
+            hdl_new = hdl;
+        end
     else
-        hdl_explanted = hdl;
+        if unique_probes(i)~=17131312432
+            hdl_explanted = hdl;
+        end
     end
-%     if numel(noise_uV_median{i}) > 1
-%         for j = 1:numel(noise_uV_median{i})
-%             plot(days_implanted{i}(j), noise_uV_median{i}(j), 'o', 'Color', P.color_order(j,:), 'linewidth', 1);
-%         end
-%     end
 end
 xlabel('Cumulative days implanted')
-ylabel('Median noise (uV_{RMS})')
-% legend([hdl_new, hdl_explanted], {'New', 'Explanted'}, 'Location', 'Best')
+ylabel({'Median noise','(\muV_{RMS})'})
+lh=legend([hdl_new, hdl_explanted], {'New', 'Explanted'}, 'Location', 'northwest');
+lh.FontSize=8;
+lh.Color='w';
 %% stats: Compare between fresh and explanted probes
 fprintf('\nComparing the RMS noise on the electrodes between the new and explanated probes:')
 days_implanted_latest = cellfun(@(x) x(end), days_implanted);
