@@ -22,6 +22,7 @@ end
 q3=norminv(.75);
 q=norminv(0.975);
 w=(q-q3)/(2*q3); % whisker length for 95% coverage
+n_boots=1e4;
 if ~isempty(P_in.var2)
     tmp=eval(P_in.var);
     if length(tmp(1))==1
@@ -31,12 +32,12 @@ if ~isempty(P_in.var2)
         stat_all=cellfun(@(x)x(end),eval(P_in.var));
         stat_all2=cellfun(@(x)x(end),eval(P_in.var2));    
     end
-    boots_new = bootstrp(1000,P_in.stat_func,cat(1,stat_all{idx_new}),cat(1,stat_all2{idx_new}));
-    boots_exp = bootstrp(1000,P_in.stat_func,cat(1,stat_all{~idx_new}),cat(1,stat_all2{~idx_new}));    
+    boots_new = bootstrp(n_boots,P_in.stat_func,cat(1,stat_all{idx_new}),cat(1,stat_all2{idx_new}));
+    boots_exp = bootstrp(n_boots,P_in.stat_func,cat(1,stat_all{~idx_new}),cat(1,stat_all2{~idx_new}));    
 else
     stat_all=cellfun(@(x)x(end),eval(P_in.var));
-    boots_new = bootstrp(1000,P_in.stat_func,cat(1,stat_all{idx_new}));
-    boots_exp = bootstrp(1000,P_in.stat_func,cat(1,stat_all{~idx_new}));
+    boots_new = bootstrp(n_boots,P_in.stat_func,cat(1,stat_all{idx_new}));
+    boots_exp = bootstrp(n_boots,P_in.stat_func,cat(1,stat_all{~idx_new}));
 end
 box_plot([1 2],[boots_new boots_exp],'center',@mean,'labels',{'New','Expl.'});
 
@@ -47,9 +48,10 @@ else
     big=boots_exp;
     small=boots_new;
 end
-if prctile(big,2.5)>mean(small) && prctile(small,97.5)<mean(big)
-    if prctile(big,0.5)>mean(small) && prctile(small,99.5)<mean(big)
-        if prctile(big,0.1)>mean(small) && prctile(small,99.9)<mean(big)
+p_val = (sum(small>big)+1)/n_boots;
+if p_val<0.05
+    if p_val<0.01
+        if p_val<0.001
             %p<0.001
             n_stars=3;
         else%p<0.01

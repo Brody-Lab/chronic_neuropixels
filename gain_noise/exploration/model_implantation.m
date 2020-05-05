@@ -25,14 +25,14 @@ sigma(2,2) = var(log10([noise(1).new(:);noise(2).new(:)]));
 sigma(1,2)=0.0074;
 sigma(2,1)=0.0074;
 
-x=logspace(-3,-1,10);
+x=logspace(-3,-0,20);
 count=0;
 n_samples=1e5;
 clear M r2
 for i=x(:)'
     count=count+1;    
     for k=1:50
-        predicted_noise = mvnrnd(mu,sigma,n_samples) + i.*mvnrnd(mu,[sigma(1) 0; 0 sigma(4)],n_samples);
+        predicted_noise = mvnrnd(mu,sigma,n_samples) + i.*mvnrnd(mu*i,[sigma(1) 0; 0 sigma(4)],n_samples);
         r2(count,k) = rsquare(zscore(10.^predicted_noise(:,1)),zscore(10.^(predicted_noise(:,2))));
         M(count,k) = median(10.^predicted_noise(:));
     end
