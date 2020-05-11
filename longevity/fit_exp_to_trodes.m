@@ -40,7 +40,7 @@
 %
 %   x0
 %       The first day after surgery to be examined.
-function [S, X, y] = fit_exp_to_electrodes(Cells, varargin)
+function S = fit_exp_to_trodes(Cells, varargin)
 parseobj = inputParser;
 P = get_parameters;
 addParameter(parseobj, 'hierarchical_bootstrap',false, @(x) isscalar(x) && (x==0 ||x==1))
@@ -59,7 +59,8 @@ addParameter(parseobj, 'x0', min(P.longevity_time_bin_centers), @(x) isscalar(x)
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
 % Make T_trode
-T_trode = make_T_trode(Cells, 'x0', P_in.x0);
+T_trode = make_T_trode(Cells, 'x0', P_in.x0, ...
+                              'unit_distance', P_in.unit_distance);
 % normalize the regressors
 T_norm = T_trode; 
 for i = 1:numel(P_in.regressors)
@@ -81,66 +82,51 @@ if ~isempty(P_in.whiten)
     end
     T_norm{:, P.exp_decay_regressors} = params';
 end
-% Make the design matrix and response variable
-% X0: the columns of the design matrix that do not depend on days_elapsed
-X0 = T_norm{:, P_in.regressors};
-% Xt: the columns of the design matrix that depend on days_elapsed
-Xt =[ones(size(T_norm,1),1), T_norm{:, P_in.regressors}] .* (T_norm.days_elapsed-P_in.x0);
-X = [X0, Xt];
+%% Get some variables
+t = T_norm.days_elapsed-P_in.x0;
 y = T_trode.(P_in.metric);
-% Bootstrap
-if P_in.hierarchical_bootstrap
-    unique_Cells_index = unique(T_norm.Cells_index);
-    i = 0;
-    while i<P_in.n_boot
-        boot_idx = [];
-        boot_sess = datasample(unique_Cells_index, numel(unique_Cells_index));
-        for j = 1:numel(boot_sess)
-            idx = T_norm.Cells_index == boot_sess(j);
-            inds = datasample(find(idx), sum(idx));
-            boot_idx = [boot_idx; inds];
-        end
-        lastwarn('');
-        FitInfo = struct;
-        if isempty(P_in.regularization_alpha)
-            [b, dev, stats] = glmfit(X(boot_idx,:), y(boot_idx), 'poisson');
-            FitInfo.dev=dev;
-            FitInfo.stats=stats;
-        else
-            [b, FitInfo] = lassoglm(X(boot_idx,:), y(boot_idx), 'poisson', ...
-                                    'Alpha', 0.01);
-        end
-        if isempty(lastwarn)
-            i = i + 1;
-        else
-            continue
-        end
-        S(i).b = b;
-        if P_in.return_stats
-            S(i).FitInfo = FitInfo;
-        end
-        fprintf('\n%i', i)
-    end
-else
-    if P_in.n_boot < 1 % or not
-        Boot_idx = 1:size(T_norm,1);
-    else
-        Boot_idx = bootstrp(P_in.n_boot, @(x)x, 1:size(T_norm,1)); 
-    end
-    for i = 1:max(P_in.n_boot,1)
-        boot_idx = Boot_idx(i,:)';
-        FitInfo = struct;
-        if isempty(P_in.regularization_alpha)
-            [b, dev, stats] = glmfit(X(boot_idx,:), y(boot_idx), 'poisson');
-            FitInfo.dev=dev;
-            FitInfo.stats=stats;
-        else
-            [b, FitInfo] = lassoglm(X(boot_idx,:), y(boot_idx), 'poisson', ...
-                                    'Alpha', P_in.regularization_alpha);
-        end
-        S(i).b = b;
-        if P_in.return_stats
-            S(i).FitInfo = FitInfo;
-        end
-    end
+X = T_norm{:, P_in.regressors};
+n = size(T_norm, 1);
+ones_vec = ones(n,1);
+%% FMINCON, additive effects on initial value
+y0_hat = mean(y(T_norm.days_elapsed == P_in.x0));
+n_reg = numel(P_in.regressors);
+b0 = [y0_hat; zeros(n_reg,1); zeros(n_reg+1,1)];
+X_ls = [ones_vec, X, ones_vec, X];
+opts=optimset('fminunc');
+opts.MaxFunEvals=1e6;
+% opts.Display = 'off';
+opts.TolFun = 1e-10;
+b0=fminunc(@(b) ls_exp_additive(b, t, X_ls, y), b0, opts);
+%% Bootstrap
+k = 0;
+S = struct;
+betas = nan(P_in.n_boot, 2*(n_reg+1));
+mse = nan(P_in.n_boot, 1);
+exit_flags = nan(P_in.n_boot, 1);
+parfor i = 1:P_in.n_boot
+    boot_idx = datasample(1:n, n);
+    [b,~,exit_flag] = fminunc(@(b) ls_exp_additive(b, t, X_ls(boot_idx,:), y(boot_idx)), b0, opts);
+    fprintf('\n %i', i)
+    betas(i,:)= b;
+    mse(i,1) = ls_exp_additive(b,t,X_ls,y)/n;
+    exit_flags(i,1) = exit_flag;
+end
+S.b = betas;
+S.mse = mse;
+S.exit_flag = exit_flags;
+end
+
+% y ~ exp(b{1}*x{1} + ... b{n}*x{n}) * ...
+%     exp((b{n+1}*x{n+1} + ... b{2n}*x{2n})*t)
+function Q = ls_exp_additive(b,t,X,y)
+    y_hat = exp_additive(b,t,X);
+    Q = sum((y - y_hat).^2)/size(X,1);
+end
+
+function y_hat = exp_additive(b,t,X)
+    n_x = size(X,2)/2;
+    y0 = X(:, 1:n_x)*b(1:n_x);
+    k =  X(:, n_x+1:end)*b(n_x+1:end);
+    y_hat = y0.*exp(k.*t);    
 end

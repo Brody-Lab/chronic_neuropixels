@@ -63,7 +63,7 @@ addParameter(parseobj, 'normalize_initial_value', false, @(x) islogical(x)&&issc
 addParameter(parseobj, 'FaceAlpha', 0.2, ...
     @(x) validateattributes(x, {'numeric'}, {'scalar', '>=', 0, '<=', 1}))
 addParameter(parseobj, 'print_sample_size', false, @(x) islogical(x)&&isscalar(x))
-addParameter(parseobj, 'x0', min(P.longevity_time_bin_centers), @(x) isscalar(x));
+addParameter(parseobj, 'x0', P.x0, @(x) isscalar(x));
 addParameter(parseobj, 'ylabel_on', true, @(x) isscalar(x) && islogical(x));
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;

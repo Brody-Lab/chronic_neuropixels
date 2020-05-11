@@ -61,12 +61,13 @@ for i = 1:numel(Cells)
         Cells{i}.electrodes.DV = DV(:);
         Cells{i}.electrodes.ML = ML(:)+Cells{i}.penetration.craniotomy_ML;
         Cells{i}.electrodes.AP = AP(:)+Cells{i}.penetration.craniotomy_AP;
-        Cells{i}.electrodes.index = [1:191, 193:384]' + 383*Cells{i}.unique_bank;
+        Cells{i}.electrodes.index = [1:191, 193:384]' + 384*Cells{i}.unique_bank;
         trode_area = strings(960,1);
         for j = 1:numel(Cells{i}.penetration.regions)
             trode_area(Cells{i}.penetration.regions(j).electrodes) = Cells{i}.penetration.regions(j).name{1};
         end
         Cells{i}.electrodes.brain_area = trode_area(Cells{i}.electrodes.index);
+        Cells{i}.electrodes.in_brain = Cells{i}.bank_electrode_depths(:)>0;
     else
         if any(strcmp(Cells{i}.rat, {'T170', 'T173', 'T176'}))
             tip_um = 137;

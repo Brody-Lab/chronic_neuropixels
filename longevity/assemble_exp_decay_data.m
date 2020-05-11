@@ -19,11 +19,11 @@ else
 end
 P = get_parameters;
 T_ed = [];
-for cond = {'', 'DV', 'AP', 'EI'};cond=cond{:};
+for cond = {'', 'DV', 'AP'};cond=cond{:};
     T = get_metrics_from_Cells(Cells, 'condition_on', cond);
     for metric = {'unit', 'single_unit'}; metric=metric{:};
         T_ed_i = make_ed_table(T, 'metric', metric);
         T_ed = [T_ed; T_ed_i];
     end
 end
-save(P.exp_decay_data_path, 'T_ed')
+save(P.sum_exp_data_path, 'T_ed')

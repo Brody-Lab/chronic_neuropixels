@@ -40,7 +40,7 @@ P_in = parseobj.Results;
 assert(ismember(brain_region, {'mFC', 'MCtx_ADS', 'AVS'}))
 switch brain_region
     case 'mFC'
-        rat_name = ["T212"; "T224"; "T176"];
+        rat_name = ["T212"; "T224"; "T249"];
         unique_bank = 0;
         title_text = 'Medial frontal ctx';
     case 'MCtx_ADS'
@@ -69,10 +69,10 @@ for i = 1:numel(rat_name)
     idx = idx & T.probe_serial == Ct.probe_serial(end);
     switch P_in.varying
         case 'color'
-            hdl(i)= plot(T.days_since_surgery(idx)+1, T.(P_in.metric)(idx), ...
+            hdl(i)= plot(T.days_since_surgery(idx), T.(P_in.metric)(idx), ...
                  'o-', 'Color', P.color_order(i,:));
         case 'marker'
-            hdl(i) = plot(T.days_since_surgery(idx)+1, T.(P_in.metric)(idx), ...
+            hdl(i) = plot(T.days_since_surgery(idx), T.(P_in.metric)(idx), ...
                  ['k', P.marker_order(i), P.line_order{i}], 'linewidth', 1);
         otherwise
             error('This feature has not been implemented for distinguishing among recordings')

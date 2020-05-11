@@ -3,25 +3,31 @@
 %   The figure show that after an initial loss of units, spiking signals
 %   can be maintained >60 days in anterior, deeper brain regions.
 
-%% Load the cells data
+%% Load data
 from_scratch = false; % Do you want to reassemble the data files from scratch?
 P=get_parameters;
 if from_scratch
     collect_cell_files
     postprocess_Cells
+    assemble_exp_decay_data(Cells)
 else
     if ~exist('Cells', 'var')
         fprintf('Loading the variabe CELLS...')
         load([P.data_folder_path filesep 'Cells.mat'])
     end
+    if ~exist('T_ed', 'var')
+        load(P.sum_exp_data_path)
+    end
 end
+%% Parameters
+exclude_3A = true; % verify that results are similar if the one 3A probe were excluded
 %% Set up the figue
-figure('Pos', [100, 50, 2000, 1300])
+figure('Pos', [100, 50, 1600, 1300])
 k = 0;
-n_col = 4;
+n_col = 3;
 n_row = 4;
 label_offset = 0;
-show_fit = true;
+fit_type = 'exponential';
 ax_hdl={};
 %% Plot individual recordings
 for region = {'mFC', 'MCtx_ADS', 'AVS'}
@@ -31,25 +37,16 @@ for region = {'mFC', 'MCtx_ADS', 'AVS'}
                           'metric', 'n_good_units', ...
                           'axes', gca,...
                           'ylabel_on', mod(k, n_col)==1);
+    ax_hdl{k}.OuterPosition(2) = ax_hdl{k}.OuterPosition(2) + 0.03; % shift the plots above
+    label_panel(ax_hdl{k}, P.panel_labels(k), 'FontSize', P.panel_label_font_size);
 end
-% shift the plots right and above
-inter_axes_dx = ax_hdl{1}.Position(1) + ax_hdl{2}.Position(1);
-dx = inter_axes_dx/(n_col-1)/2;
-for i = 1:3
-    ax_hdl{i}.Position(1)=ax_hdl{i}.Position(1)+dx;
-    ax_hdl{i}.OuterPosition(2) = ax_hdl{i}.OuterPosition(2) + 0.03;
-    label_panel(ax_hdl{i}, P.panel_labels(i), 'FontSize', P.panel_label_font_size);
-end
-% move on to the next row
-k=k+1;
-label_offset = -1;
 %% Plot average across all conditions
-T = get_metrics_from_Cells(Cells);
+T = get_metrics_from_Cells(Cells, 'exclude_3A', exclude_3A);
 fprintf('\nANOVA with the factor days since implants and for data > 7 days:')
-for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
+for metric = {'unit', 'single_unit'}
     k = k +     1;
-    subplot(n_col, n_row,k);
-    if any(strcmp(metric{:}, {'unit', 'single_unit'})) && show_fit
+    subplot(n_row, n_col,k);
+    if any(strcmp(metric{:}, {'unit', 'single_unit'}))
         fit_type = 'exponential';
     else
         fit_type='';
@@ -65,16 +62,14 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
     fprintf('\n    %s: p=%0.3f', metric{:}, pval);
 end
 fprintf('\n')
+%% Skip a plot for the anatomical schematics
+k= k + 1;
 %% Plot average, conditioned on DV
-T = get_metrics_from_Cells(Cells, 'condition_on', 'DV');
-for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
+T = get_metrics_from_Cells(Cells, 'condition_on', 'DV', ...
+                                  'exclude_3A', exclude_3A);
+for metric = {'unit', 'single_unit'}
     k = k + 1;
-    subplot(n_col, n_row,k);
-    if any(strcmp(metric{:}, {'unit', 'single_unit'})) && show_fit
-        fit_type = 'exponential';
-    else
-        fit_type='';
-    end
+    subplot(n_row, n_col,k);
     plot_average_stability(T, 'metric', metric{:}, ...
                               'fit_type', fit_type, ...
                                   'legend_on', false, ...
@@ -91,22 +86,34 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
     fprintf('\n    bank: p = %0.3f', Pval.(metric{:})(1));
     fprintf('\n    DV: p = %0.3f', Pval.(metric{:})(2));
 end
+%% Plot model half life - DV
+k = k + 1;
+ax_hdl = subplot(n_row, 2*n_col,2*k-1);
+plot_tau_mdl(T_ed, 'condition', 'DV', ...
+                   'metric', 'unit', ...
+                   'ax', gca, ...
+                   'color_order_offset', 0);
+ax_hdl.OuterPosition(1) = ax_hdl.OuterPosition(1) + 0.03; % shift the plots right
+label_panel(gca, P.panel_labels(k+label_offset), 'FontSize', P.panel_label_font_size);
+hdl = title('Days to decay to 37% of initial value');
+hdl.HorizontalAlignment = 'left';
+ax_hdl = subplot(n_row, 2*n_col,2*k);
+plot_tau_mdl(T_ed, 'condition', 'DV', ...
+                   'metric', 'single_unit', ...
+                   'ax', gca, ...
+                   'ylabel', 0, ...
+                   'color_order_offset', 0);
+ax_hdl.OuterPosition(1) = ax_hdl.OuterPosition(1) + 0.03; % shift the plots right
 %% Plot average, conditioned on AP
-AP_bin_edges = [-8, 0, 4];
 T = get_metrics_from_Cells(Cells, 'condition_on', 'AP', ...
-                                  'AP_bin_edges', AP_bin_edges);
-for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
+                                  'exclude_3A', exclude_3A);
+for metric = {'unit', 'single_unit'}
     k = k + 1;
-    subplot(n_col, n_row,k);
+    subplot(n_row, n_col,k);
     legend_on = mod(k,n_row)==1;
-    if any(strcmp(metric{:}, {'unit', 'single_unit'})) && show_fit
-        fit_type = 'exponential';
-    else
-        fit_type='';
-    end
     plot_average_stability(T, 'metric', metric{:}, ...
                                  'fit_type', fit_type, ...
-                                  'color_order_offset', 3, ...
+                                  'color_order_offset', 2, ...
                                   'legend_on', false, ...
                                   'print_sample_size', mod(k,n_col)==1, ...
                                   'normalize_by_electrodes', true, ...
@@ -114,7 +121,23 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
                                   'axes', gca);
     label_panel(gca, P.panel_labels(k+label_offset), 'FontSize', P.panel_label_font_size);
 end
+%% Plot model half life - AP
+k = k + 1;
+ax_hdl = subplot(n_row, 2*n_col,2*k-1);
+plot_tau_mdl(T_ed, 'condition', 'AP', ...
+                   'metric', 'unit', ...
+                   'ax', gca, ...
+                   'color_order_offset', 2);
+ax_hdl.OuterPosition(1) = ax_hdl.OuterPosition(1) + 0.03; % shift the plots right
+label_panel(gca, P.panel_labels(k+label_offset), 'FontSize', P.panel_label_font_size);
+ax_hdl = subplot(n_row, 2*n_col,2*k);
+plot_tau_mdl(T_ed, 'condition', 'AP', ...
+                   'metric', 'single_unit', ...
+                   'ax', gca, ...
+                   'ylabel', 0, ...
+                   'color_order_offset', 2);
+ax_hdl.OuterPosition(1) = ax_hdl.OuterPosition(1) + 0.03; % shift the plots right
 %% Save
 for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.plots_folder_path filesep 'figure2'], P.figure_image_format{i})
+    saveas(gcf, [P.plots_folder_path filesep 'figure2_v2'], P.figure_image_format{i})
 end

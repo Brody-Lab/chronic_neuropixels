@@ -116,5 +116,5 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
 end
 %% Save
 for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.plots_folder_path filesep 'figure2'], P.figure_image_format{i})
+    saveas(gcf, [P.plots_folder_path filesep 'figure2_v1'], P.figure_image_format{i})
 end

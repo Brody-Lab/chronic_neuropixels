@@ -36,6 +36,9 @@
 %       If CONDITION_ON includes 'DV', then this increasing vector
 %       specifies the bin edges for binning DV positions
 %
+%   exclude_3A
+%       Exclude recordings from 3A probes.
+%
 %   exclude_holderless
 %       A logical scalar specifying whether exclude animals implanted
 %       without a holder
@@ -74,6 +77,7 @@ addParameter(parseobj, 'EI_bin_edges', P.EI_bin_edges, ...
 addParameter(parseobj, 'ML_bin_edges', P.ML_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
 addParameter(parseobj, 'exclude_holderless', true, @(x) isscalar(x) && islogical(x))
+addParameter(parseobj, 'exclude_3A', false, @(x) isscalar(x) && islogical(x))
 addParameter(parseobj, 'x0', min(P.longevity_time_bin_centers), @(x) isscalar(x) && isnumeric(x))
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
@@ -116,6 +120,10 @@ k = 0;
 for i = 1:numel(Cells)
     if P_in.exclude_holderless && ...
        (Cells{i}.rat=="T170"||Cells{i}.rat=="T173")
+        continue
+    end
+    if P_in.exclude_3A && ...
+       Cells{i}.rat=="T176"
         continue
     end
     if Cells{i}.days_since_surgery < P_in.x0
@@ -167,6 +175,8 @@ for i = 1:numel(Cells)
         SP_bin_cells = SP_bin_cells + (Cells{i}.shank_plane=="coronal");
         SP_bin_trode = SP_bin_trode + (Cells{i}.shank_plane=="coronal");
     end
+    % keep only the cells that are associated with electrodes in the brain
+    idx_in_brain = ismember(Cells{i}.electrode, Cells{i}.electrodes.index);
     % each row is a condition x recording
     c = 0; 
     for i_AP = 1:numel(AP_bin_edges)-1
@@ -181,7 +191,8 @@ for i = 1:numel(Cells)
                     ML_bin_cells==i_ML & ...
                     EI_bin_cells==i_EI & ...
                     BA_bin_cells==i_BA & ...
-                    SP_bin_cells==i_SP;
+                    SP_bin_cells==i_SP & ...
+                    idx_in_brain;
         idx_trode = AP_bin_trode==i_AP & ...
                     DV_bin_trode==i_DV & ...
                     ML_bin_trode==i_ML & ...
@@ -223,6 +234,7 @@ for i = 1:numel(Cells)
         T.n_elec(k,1) = sum(idx_trode);
         T.shank_plane(k,1) = string(Cells{i}.shank_plane);
         T.probe_serial{k,1} = Cells{i}.probe_serial;
+        T.sess_date(k,1) = Cells{i}.sess_date;
     end
     end
     end

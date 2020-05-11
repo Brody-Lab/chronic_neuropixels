@@ -40,6 +40,7 @@ end
 P.choice_sel_mat_path = [P.data_folder_path filesep 'choice_modulation.mat'];
 P.Cells_path = [P.data_folder_path filesep 'Cells.mat'];
 P.exp_decay_data_path = [P.data_folder_path filesep 'exp_decay_data.mat'];
+P.sum_exp_data_path = [P.data_folder_path filesep 'sum_exp_data.mat'];
 %% analyses
 P.noise_threshold_uV = 20;
 P.gain_noise_example.implanted = 'gain_noise_17131311352_2019_10_09';
@@ -56,7 +57,52 @@ P.longevity_metrics = {'unit', ...
                        'frac_single'};
 P.longevity_n_boots = 1000;
 P.exp_decay_n_boots = 1000;
-P.exp_decay_regressors = {'AP', 'DV', 'ML', 'SVP', 'SPA'};
+P.ED_trode_factors = {'AP', 'AP_cat', 'DV', 'DV_cat', 'ML', 'SP', 'SO'};
+P.ED_trode_regressors = {'y0_AP', 'y0_AP_cat', 'y0_DV', 'y0_DV_cat', 'y0_ML', 'y0_SP', 'y0_SO', ...
+                         'k_AP',   'k_AP_cat',  'k_DV',  'k_DV_cat',     'k_ML',  'k_SP',  'k_SO'};
+P.ED_excluded_pairs = {[1,2], [3,4], [8,9], [10,11], [1,9], [2,8], [3,11], [4,10]};
+P.ED_trode_regressors_all = {'y0', 'y0_AP', 'y0_AP_cat', 'y0_DV', 'y0_DV_cat', 'y0_ML', 'y0_SP', 'y0_SO', ...
+                             'k', 'k_AP',   'k_AP_cat',  'k_DV',  'k_DV_cat',     'k_ML',  'k_SP',  'k_SO'};
+P.ED_trode_regressors_symbols = {'\beta_{0}^{N_{1}}',
+                                '\beta_{AP}^{N_{1}}', 
+                                '\beta_{AP>0}^{N_{1}}', 
+                                '\beta_{DV}^{N_{1}}',
+                                '\beta_{DV>-2}^{N_{1}}', 
+                                '\beta_{ML}^{N_{1}}', 
+                                '\beta_{SP}^{N_{1}}',
+                                '\beta_{SO}^{N_{1}}'
+                                '\beta_{0}^{\tau}',
+                                '\beta_{AP}^{\tau}', 
+                                '\beta_{AP>0}^{\tau}', 
+                                '\beta_{DV}^{\tau}',
+                                '\beta_{DV>-2}^{\tau}', 
+                                '\beta_{ML}^{\tau}', 
+                                '\beta_{SP}^{\tau}',
+                                '\beta_{SO}^{\tau}'};
+P.ED_trode_regressors_explanation = { '',
+                                '(mm anterior)', 
+                                '', 
+                                '(mm dorsal)',
+                                '(dorsal cortex)', 
+                                '(mm lateral)', 
+                                '(mm from tip)',
+                                '(coronal plane)'
+                                '',
+                                '(mm anterior)', 
+                                '', 
+                                '(mm dorsal)',
+                                '(dorsal cortex)', 
+                                '(mm lateral)', 
+                                '(mm from tip)',
+                                '(coronal plane)'};
+P.ED_trode_regressors_names =cellfun(@(x,y) ['\parbox[b]{2in}{$' x, '\\$', y '}'], ...
+                                    P.ED_trode_regressors_symbols, ...
+                                    P.ED_trode_regressors_explanation, 'uni', 0);
+P.ED_trode_regressors_symbols = cellfun(@(x) ['$' x '$'], P.ED_trode_regressors_symbols, 'uni', 0);
+P.ED_trode_selection_criterion = 'mse_med';
+
+P.unit_distance = 0;
+P.x0 = min(P.longevity_time_bin_centers);
 P.n_boots = 1000;
 P.choice_sel_reference_event = 'cpoke_out';
 P.choice_sel_steps_s = -1:0.02:0.5;
@@ -66,6 +112,29 @@ P.DV_bin_edges = [-10, -2,   0];
 P.EI_bin_edges = [1, 193, 385, 577, 769];
 P.ML_bin_edges = [0 1 4];
 P.brain_area_groups = {{'PrL', 'MO'}, {'other'}};
+%% Sum of exponentials model for electrodes
+
+P.sum_exp_trodes.exp_factors = {'AP', 'AP_gt0', 'DV', 'DV_gtn2', 'ML', 'SP', 'SO'};
+P.sum_exp_trodes.regressors = {'N1_const', 'N1_AP', 'N1_AP_gt0', 'N1_DV', 'N1_DV_gtn2', 'N1_ML', ...
+                               'k_const',   'k_AP',  'k_AP_gt0',  'k_DV',  'k_DV_gtn2',  'k_ML', 'k_SP', 'k_SO'};
+P.sum_exp_trodes.selection_criterion='MSE_norm';
+P.sum_exp_trodes.data_path=[P.data_folder_path filesep 'sum_exp_trodes_data.mat'];
+P.sum_exp_trodes.regressor_labels = {'$\alpha$', ...
+                                       '$k_{0}$', ...
+                                       '$\beta^{N_{1}}_{0}$', ...
+                                       '$\beta^{N_{1}}_{AP}$', ...
+                                       '$\beta^{N_{1}}_{AP>0}$', ...
+                                       '$\beta^{N_{1}}_{DV}$', ...
+                                       '$\beta^{N_{1}}_{DV>-2}$', ...
+                                       '$\beta^{N_{1}}_{ML}$', ...
+                                       '$\beta^{k}_{0}$', ...
+                                       '$\beta^{k}_{AP}$', ...
+                                       '$\beta^{k}_{AP>0}$', ...
+                                       '$\beta^{k}_{DV}$', ...
+                                       '$\beta^{k}_{DV>-2}$', ...
+                                       '$\beta^{k}_{ML}$', ...
+                                       '$\beta^{k}_{SP}$', ...
+                                       '$\beta^{k}_{SO}$'};
 %% plotting formats
 P.figure_image_format = {'png', 'svg'};
 P.figure_position_psychometrics = [rand*1000, rand*1000, 250, 250];
@@ -73,8 +142,8 @@ P.figure_position_behavioral_comparison = [rand*1000, rand*1000, 250, 250];
 P.figure_position_gn = [rand*1000, rand*1000, 350, 250];
 P.figure_position_gn_summary = [rand*1000, rand*1000, 250, 250];
 P.figure_position_longevity = [rand*1000, rand*1000, 400, 350];
-font_size = 14;
-P.axes_properties = {'FontSize', font_size, ...
+P.font_size = 14;
+P.axes_properties = {'FontSize', P.font_size, ...
                      'Color', 'none', ...
                      'TickDir', 'Out',...
                      'Nextplot', 'add', ...
@@ -119,7 +188,7 @@ P.color_order = repmat(P.color_order, 10, 1);
 P.marker_order = 'o*^+xsdv><ph';
 P.marker_order = repmat(P.marker_order, 1, 10);
 P.line_order = {'-', '--', ':', '-.'};
-P.panel_label_font_size = font_size * 1.5;
+P.panel_label_font_size = P.font_size * 1.5;
 P.panel_label_pos = [0.1, 0.9, 0.1, 0.1];
 P.panel_labels = char(65:90);
 P.text.unit = 'Units';
@@ -132,5 +201,8 @@ P.text.DV = 'DV';
 P.text.ML = 'ML';
 P.text.AP = 'AP';
 P.text.DV = 'DV';
-P.text.SVP = 'Shank\newline  pos.';
-P.text.SPA = 'Shank\newline  ori.';
+P.text.SP = 'Shank\newline  pos.';
+P.text.SO = 'Shank\newline  ori.';
+P.text.alpha = 'Frac. with fast decay (\alpha)';
+P.text.tau_s = '\tau_{slow}';
+P.text.tau_f = '\tau_{fast}';
