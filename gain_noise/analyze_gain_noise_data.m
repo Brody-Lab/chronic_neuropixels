@@ -21,7 +21,16 @@ for i = 1:n_probes
             T.electrodes_implanted(ind) = T.electrodes_implanted(ind) - 10;
         end
         idx_electrodes = 1:T.electrodes_implanted(ind);
+        idx_electrodes = idx_electrodes(idx_electrodes<=960);
         idx_channels = ((1:384) + 384)<=T.electrodes_implanted(ind);
+        %% calculate regardless of depth implanted
+        gain_median{i,1}(j,1) = median(D.gain(idx_electrodes));
+        gain_95{i,1}(j,1:2) = quantile(D.gain(idx_electrodes), [0.025, 0.975]);
+        noise_uV{i,1}{j,1} = D.noise_uV(idx_electrodes);
+        noise_uV_median{i,1}(j,1) = median(D.noise_uV(idx_electrodes));
+        noise_uV_95{i,1}(j,1:2) = quantile(D.noise_uV(idx_electrodes), [0.025, 0.975]);
+        frac_noisy{i,1}(j,1) = sum(D.noise_uV(idx_electrodes)>P.noise_threshold_uV)/numel(idx_electrodes);
+        days_implanted{i}(days_implanted{i}>200) = 200;       
         if sum(idx_channels)<min_channels
             bank_corr_rank{i,1}(j,1) = NaN;
             bank_corr_linear{i,1}(j,1) = NaN;       
@@ -32,9 +41,10 @@ for i = 1:n_probes
             bank_1_noise{i,1} = NaN;
             bank_0_noise_z{i,1} = NaN;
             bank_1_noise_z{i,1} = NaN;  
-            bank_rsquare_z{i,1} = NaN;            
+            bank_rsquare_z{i,1} = NaN;  
             continue
         end
+        %% calculate only if bank 1 is sufficiently inserted
         bank_idx =1:384;
         bank_0_noise{i,1} = table2array(D(bank_idx(idx_channels),2));
         bank_1_noise{i,1} = table2array(D(bank_idx(idx_channels)+384,2));
@@ -54,8 +64,7 @@ for i = 1:n_probes
         days_implanted{i}(days_implanted{i}>200) = 200;
         bank_corr_rank_z{i,1}(j,1) = corr(zscore(bank_0_noise{i,1}),zscore(bank_1_noise{i,1}),'Type','Spearman');
         bank_corr_linear_z{i,1}(j,1) = corr(zscore(bank_0_noise{i,1}),zscore(bank_1_noise{i,1}));      
-        bank_rsquare_z{i,1}(j,1) = rsquare(zscore(bank_0_noise{i,1}),zscore(bank_1_noise{i,1}));        
-        
+        bank_rsquare_z{i,1}(j,1) = rsquare(zscore(bank_0_noise{i,1}),zscore(bank_1_noise{i,1}));          
         probe_sn{i,1} = T.probe_sn(ind);
     end
 end

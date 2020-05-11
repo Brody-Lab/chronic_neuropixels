@@ -47,8 +47,8 @@ for i =1:n_probes
     end
 end
 xlabel('Cumulative days implanted')
-ylabel({'Across-bank','noise similarity (R^2)'});
-legend([hdl_new, hdl_explanted], {'New', 'Explanted'}, 'Location', 'Best')
+ylabel('Across-bank R^2');
+%legend([hdl_new, hdl_explanted], {'New', 'Explanted'}, 'Location', 'Best')
 %% stats: Compare between fresh and explanted probes
 fprintf('\nComparing the across-bank correlation on the electrodes between the new and explanated probes:')
 days_implanted_latest = cellfun(@(x) x(end), days_implanted);

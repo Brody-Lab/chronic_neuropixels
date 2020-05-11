@@ -44,7 +44,7 @@ for i = 1:numel(rat_name)
     idx = idx & T.probe_serial == Ct.probe_serial(end);    
 %     T(idx,:) for debugging
     hdl(i) = plot(T.days_since_surgery(idx)+1, T.(P_in.metric)(idx), 'o-', ...
-                    'Color', P.color_order(i,:), ...
+                    'Color', P.explant_color_order{i}, ...
                     'linewidth', 1);
     
     S.metric{i,1} = T.(P_in.metric)(idx);
@@ -52,7 +52,7 @@ for i = 1:numel(rat_name)
     S.implant{i,1} = repmat(i, size(S.metric{i,1}));
 end
 set(gca, 'xlim', [2^-0.5, 2^7], ...
-         'xtick', 2.^(0:9));
+         'xtick', 2.^(0:2:6));
 ylim([0,1].*ylim)
 xlabel('Days since implant')
 switch P_in.metric
@@ -60,13 +60,14 @@ switch P_in.metric
         ylabel('Units')
     case 'n_good_units'
         ylabel('Single units')
+        set(gca,'ylim',[0 500]);
     case 'fr'
         ylabel('Event rate')
     case 'Vpp'
-        ylabel('Peak-to-peak amplitude (uV)')
+        ylabel({'Spike amplitude','(\muV_p_p)'});
 end
 if P_in.legend
-    legend(hdl, {'Initial', 'Second', 'Third'}, 'location', 'best')
+    legend(hdl, {'Initial', 'Second', 'Third'}, 'location', 'northeast','FontSize',8,'color','w');
 end
 % Stats
 S = structfun(@cell2mat, S, 'uni', 0);
