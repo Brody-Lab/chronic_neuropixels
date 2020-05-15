@@ -16,9 +16,9 @@ function T_mdl = make_T_mdl(varargin)
     addParameter(parseobj, 'regressors', P.sum_exp_trodes.regressors, @(x) all(ismember(x, P.longevity_metrics)))
     parse(parseobj, varargin{:});
     P_in = parseobj.Results;
-    
-    n_non_const = sum(~contains(P_in.regressors, 'const'));
-    inds = dec2bin(0:(2^n_non_const-1));
+    % number of regressors that are varied
+    n_varying = sum(~contains(P_in.regressors, 'const'));
+    inds = dec2bin(0:(2^n_varying-1));
     inds = inds=='1';
 
     k = 0;
@@ -33,8 +33,6 @@ function T_mdl = make_T_mdl(varargin)
     end
     T_mdl = struct2table(T_mdl);
 
-    
-    
     % remove instances in which the categorical and the noncategorical
     % regressor of the same experimental factor shows up
     idx_remove = false(size(T_mdl,1),1);
@@ -76,11 +74,17 @@ function [exp_factor, eq_term, is_cat] = parse_regressor_name(str)
     if numel(idx) > 1
         exp_factor =str(idx(1)+1:idx(2)-1);
         is_cat = true;
+        eq_term = str(1:idx(1)-1);
     elseif numel(idx)==1
         exp_factor =str(idx(1)+1:end);
         is_cat = false;
+        eq_term = str(1:idx(1)-1);
+    elseif strcmp(str, 'alpha')
+        exp_factor =str;
+        is_cat = false;
+        eq_term = str;
     else
         error('Error parsing regressor names')
     end
-    eq_term = str(1:idx(1)-1);
+    
 end

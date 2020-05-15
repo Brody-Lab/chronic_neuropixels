@@ -68,18 +68,18 @@ function S = sum_exp_trodes_compute_CI(S, varargin)
         parfor j = 1:P_in.n_boot
             bootidx = datasample(1:n_trodes, n_trodes);
             betas = fit_mdl_sum_exp_trodes(XN1(bootidx,:), ...
-                             Xk(bootidx,:),t(bootidx,:), y(bootidx,:));
+                             Xk(bootidx,:),t(bootidx,:), y(bootidx,:), 'noise', S.P_in.noise);
 
             b_tmp = nan(1, n_regressors);                
-            b_tmp([true, true, S.T_mdl{ind_m,:}]) = betas;
+            b_tmp([true, true, true, S.T_mdl{ind_m,:}]) = betas;
             bootcoef(j,:) = b_tmp;
             fprintf('\n model %i boot %i',ind_m, j)
         end
         b = S.T_res.b{ind_m}(:, i);
         b=b(:)';
         S.T_res.b_med(ind_m,:) = b;
-        S.T_res.cil(ind_m,:) =  2*b - quantile(bootcoef, 0.975);
-        S.T_res.ciu(ind_m,:) =  2*b - quantile(bootcoef, 0.025);
+        S.T_res.cil(ind_m,:) =  quantile(bootcoef, 0.025);
+        S.T_res.ciu(ind_m,:) =  quantile(bootcoef, 0.975);
         S.T_res.bootcoef{ind_m,1} = bootcoef;
         S.T_res.i_coef_est(ind_m,1) = i;
     end

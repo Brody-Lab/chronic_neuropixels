@@ -20,9 +20,10 @@
 function yhat = predict_y(b, XN1, Xk, t)
     n_XN1 = size(XN1,2);
     a = b(1);
-    ka = b(2);
-    bN1 = b(3:n_XN1+2);
-    bk = b(n_XN1+3:end);
+    kf = b(2);
+    ks = b(3);
+    bN1 = b(4:n_XN1+3);
+    bk = b(n_XN1+4:end);
     N1 = XN1*bN1;
-    yhat = N1 .* (a*exp(ka*t) + (1-a)*exp(t.*Xk*bk) ); 
+    yhat = N1 .* (a*exp(kf*t) + (1-a)*exp(ks*t)) .* (exp(t.*Xk*bk) ); 
 end

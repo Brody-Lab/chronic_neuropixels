@@ -17,7 +17,20 @@
 %   y
 %
 %       the response variable (unit count, etc.)
-function b = fit_mdl_sum_exp_trodes(XN1, Xk, t, y)
+function b = fit_mdl_sum_exp_trodes(XN1, Xk, t, y, varargin)
+    P = get_parameters;
+    parseobj = inputParser;
+    addParameter(parseobj, 'noise', 'gaussian', @(x) any(strcmpi(x, {'poisson', 'gaussian'})))
+    parse(parseobj, varargin{:});
+    P_in = parseobj.Results;
+    switch P_in.noise
+        case 'gaussian'
+            calc_err = @mean_square_error;
+        case 'poisson'
+            calc_err = @poisson_nLL_approx;
+        otherwise
+            error('unrecognized noise distribiution');
+    end
     opts=optimoptions('fmincon');
     opts.Display = 'off';
 %     opts.MaxFunctionEvaluations = 1e5;
@@ -25,7 +38,7 @@ function b = fit_mdl_sum_exp_trodes(XN1, Xk, t, y)
     % Initial valuess
     n_XN1 = size(XN1,2);
     n_Xk = size(Xk,2);
-    b0 = [0.5; -1; ones(n_XN1,1); -0.01*ones(n_Xk,1)]; % [alpha, tau_alpha, ...]
+    b0 = [0.5; -1; -0.01; ones(n_XN1,1); -0.01*ones(n_Xk,1)]; % [alpha, tau_alpha, ...]
     % The linear constraints matrix
     % A*b >= 0
     % The weighted sum of the decay terms has to be positive.
@@ -45,11 +58,18 @@ function b = fit_mdl_sum_exp_trodes(XN1, Xk, t, y)
     % combine the two linear inequality matrices
     lb = [0; ... alpha
           -10; ... k_fast
+          -1; ... k_slow
           -10*ones(n_XN1+n_Xk,1)];
     ub = [1; ... alpha
           -1e-6; ... k_fast
+          -1e-6; ... k_slow
           inf(n_XN1+n_Xk,1)];
-    b = fmincon(@(b) mean_square_error(b, XN1, Xk, t, y), b0, [], [], ...
+    % make k_fast <= k_slow
+    A = zeros(size(b0));
+    A = A(:)';
+    A(2:3) = [1,-1]; % k_fast - k_slow <= 0
+    bound = 0;
+    b = fmincon(@(b) calc_err(b, XN1, Xk, t, y), b0, A, bound, ...
                                 [], [], lb, ub, [], ...
                                 opts);
 %     poisson_nLL_approx(b, XN1, Xk, t, y)
@@ -68,14 +88,14 @@ function b = fit_mdl_sum_exp_trodes(XN1, Xk, t, y)
 %     ylabel('LL')
 %     title(['mean LL = ' num2str(mean(LL))])
 end
-% %% POISSON_LL_APPROX
-% % Calculating the sum of the poisson loglikelihood given the observations
-% % and the parameters for approximating the lambda. The term in the
-% % loglikelihood that depends only on the observations is not included.
-% function nLL = poisson_nLL_approx(b, XN1, Xk, t, y)
-%     lambda = calc_lambda(b, XN1, Xk, t);
-%     nLL = sum(lambda) - sum(y.*log(lambda)); % ignoring the term independent of lambda
-% end
+%% POISSON_LL_APPROX
+% Calculating the sum of the poisson loglikelihood given the observations
+% and the parameters for approximating the lambda. The term in the
+% loglikelihood that depends only on the observations is not included.
+function nLL = poisson_nLL_approx(b, XN1, Xk, t, y)
+    yhat = predict_y(b, XN1, Xk, t);
+    nLL = sum(yhat) - sum(y.*log(yhat)); % ignoring the term independent of lambda
+end
 %% sum of absolute deviation
 function mse = mean_square_error(b, XN1, Xk, t, y)
     yhat = predict_y(b, XN1, Xk, t);

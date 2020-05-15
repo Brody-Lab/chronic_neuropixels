@@ -42,6 +42,7 @@ function S = sum_exp_trodes_select_mdl(Cells, varargin)
     parseobj = inputParser;
     addParameter(parseobj, 'KFold', 5, ...
         @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer', 'nonzero'}))
+    addParameter(parseobj, 'noise', 'gaussian', @(x) any(strcmpi(x, {'poisson', 'gaussian'})))
     addParameter(parseobj, 'metric', 'unit', @(x) all(ismember(x, P.longevity_metrics)))
     addParameter(parseobj, 'iterations', 10, ...
             @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer', 'nonzero'}))
@@ -60,13 +61,22 @@ function S = sum_exp_trodes_select_mdl(Cells, varargin)
     end
     T_mdl = make_T_mdl; % that needs to be changed to include the constant terms
     T_dsgn = make_design_matrix(T_trode);
-    
+    switch P_in.noise
+        case 'gaussian'
+            crossval_mdl = @crossval_gaussian;
+            P_in.err_txt = 'MSE';
+        case 'poisson'
+            crossval_mdl = @crossval_poisson;
+            P_in.err_txt = 'nLL';
+        otherwise
+            error('unrecognized noise distribiution');
+    end
     % set up the (par)for loop
     % split the data and fit half of the data to the model variants
-    MSE = nan(size(T_mdl,1), P_in.iterations);
+    Err = nan(size(T_mdl,1), P_in.iterations);
     n_trodes = size(T_trode,1);
     trodes_used = false(n_trodes, P_in.iterations);
-    b = arrayfun(@(x) nan(numel(P.sum_exp_trodes.regressors)+2, P_in.iterations), (1:size(T_mdl,1))', 'uni', 0);
+    b = arrayfun(@(x) nan(numel(P.sum_exp_trodes.regressors)+3, P_in.iterations), (1:size(T_mdl,1))', 'uni', 0);
     for i = 1:P_in.iterations
         i_trodes=ismember(1:n_trodes, randperm(n_trodes, round(n_trodes/2)));
         trodes_used(:,i)=i_trodes;
@@ -76,37 +86,39 @@ function S = sum_exp_trodes_select_mdl(Cells, varargin)
         parfor j = 1:size(T_mdl,1)     
             [XN1, Xk] = partition_T_dsgn(T_dsgn, T_mdl, j, 'i_trodes', i_trodes);
             % fit the parameters using all the data in the subset
-            betas = fit_mdl_sum_exp_trodes(XN1, Xk, t, y);
-            b{j}(1:2,i) = betas(1:2);
+            betas = fit_mdl_sum_exp_trodes(XN1, Xk, t, y, 'noise', P_in.noise);
+            b{j}(1:3,i) = betas(1:3);
             betas_regressors = nan(numel(T_mdl{j,:}),1);
-            betas_regressors(T_mdl{j,:}) = betas(3:end);
-            b{j}(3:end,i) = betas_regressors;
+            betas_regressors(T_mdl{j,:}) = betas(4:end);
+            b{j}(4:end,i) = betas_regressors;
             % get out of sample LL
-            mse = crossval(@crossval_mdl, XN1, Xk, t, y, 'Partition', cvp);
-            MSE(j,i) = mean(mse);
-            fprintf('\nIteration %i - model %i - MSE: %0.3f', i, j, MSE(j,i))
+            err = crossval(crossval_mdl, XN1, Xk, t, y, 'Partition', cvp);
+            Err(j,i) = mean(err);
+            fprintf('\nIteration %i - %s model %i - %s: %0.3f', ...
+                    i, P_in.noise, j, P_in.err_txt, Err(j,i))
         end
     end
     % collect variables into the table T_MDL
     % in each iteration, get the rank of that model from the lowest to
     % highest LL
     
-    MSE_norm = (MSE - min(MSE))./(max(MSE)-min(MSE));
+    Err=real(Err);
+    err_norm = (Err - min(Err))./(max(Err)-min(Err));
     T_res = T_mdl;
-    T_res.MSE_norm = mean(MSE_norm,2);
-    T_res.MSE_norm(isnan(T_res.MSE_norm)) = 0;
+    T_res.err_norm = mean(err_norm,2);
+    T_res.err_norm(isnan(T_res.err_norm)) = 0;
     T_res.b = b;
-    T_res.MSE = MSE;    
-    [~, mdl_sort_idx] = sort(MSE); 
+    T_res.MSE = Err;    
+    [~, mdl_sort_idx] = sort(Err); 
     for i = 1:P_in.iterations
-        T_res.rank(mdl_sort_idx(:,i),i) = (1:size(MSE,1))';
+        T_res.rank(mdl_sort_idx(:,i),i) = (1:size(err_norm,1))';
     end
     T_res.frac_best = sum(T_res.rank==1,2)/P_in.iterations;
     T_res.avg_rank = mean(T_res.rank,2);
     T_res.n_regressors = sum(T_res{:,P.sum_exp_trodes.regressors},2);
     
     % sort rows
-    sort_col = find(strcmp(T_res.Properties.VariableNames,P.sum_exp_trodes.selection_criterion));
+    sort_col = find(strcmp(T_res.Properties.VariableNames,'err_norm'));
     [T_res, I] = sortrows(T_res, sort_col); 
     T_mdl = T_mdl(I, :);
     
@@ -119,10 +131,18 @@ function S = sum_exp_trodes_select_mdl(Cells, varargin)
     S.P_in = P_in;
     S.T_dsgn = T_dsgn;
 end
-%% CROSSVAL_MDL
-function mse = crossval_mdl(XN1train, Xktrain, ttrain,  ytrain, ...
+%% CROSSVAL_gaussian
+function mse = crossval_gaussian(XN1train, Xktrain, ttrain,  ytrain, ...
                                XN1test, Xktest,  ttest, ytest)
     b = fit_mdl_sum_exp_trodes(XN1train, Xktrain, ttrain, ytrain);
     yhat = predict_y(b, XN1test, Xktest, ttest);
     mse = mean((ytest-yhat).^2);
+end
+
+%% CROSSVAL_poisson
+function nLL = crossval_poisson(XN1train, Xktrain, ttrain,  ytrain, ...
+                               XN1test, Xktest,  ttest, ytest)
+    b = fit_mdl_sum_exp_trodes(XN1train, Xktrain, ttrain, ytrain);
+    yhat = predict_y(b, XN1test, Xktest, ttest);
+    nLL = sum(yhat) - sum(ytest.*log(yhat)); % ignoring the term independent of lambda
 end
