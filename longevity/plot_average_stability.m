@@ -142,7 +142,7 @@ for i = 1:numel(unique(T.condition))
             idx_nan = isnan(x)|isnan(y);
             x =x(~idx_nan);
             y=y(~idx_nan);
-            p_hat = fit_sum_2_exp_decay(x,y, 'n_boot', 0);
+            p_hat = fit_sum_2_exp_decay(x,y, 'n_boot', 0, 'fit_initial_value', ~P_in.normalize_initial_value);
             y_hat = sum_2_exp_decay(x,p_hat);
             if P_in.normalize_initial_value
                 y_hat = y_hat/mean((y_hat(x == P_in.x0)));

@@ -53,7 +53,6 @@ switch brain_region
         title_text = 'Ventral striatum';
 end
 P = get_parameters;
-T = make_table_from_Cells(Cells);
 if isempty(P_in.axes)
     figure('Position', P.figure_position_longevity);
 else
@@ -62,17 +61,19 @@ end
 set(gca, P.axes_properties{:})
 set(gca, P.custom_axes_properties.longevity{:});
 for i = 1:numel(rat_name)
-    idx=T.rat == rat_name(i) & T.unique_bank == unique_bank;
+    T = get_metrics_from_Cells(Cells, 'condition_on', 'EI', ...
+                                'EI_bin_edges', unique_bank*384 + [1, 384]);
+    T = T(T.rat==rat_name(i),:);
     % if there are multiple probes per animal, use only the one with the
     % largest number of recordings
-    Ct = groupcounts(T(idx,:), 'probe_serial'); 
-    idx = idx & T.probe_serial == Ct.probe_serial(end);
+    Ct = groupcounts(T, 'probe_serial'); 
+    T = T(T.probe_serial == Ct.probe_serial(end), :);
     switch P_in.varying
         case 'color'
-            hdl(i)= plot(T.days_since_surgery(idx), T.(P_in.metric)(idx), ...
+            hdl(i)= plot(T.days_elapsed, T.(P_in.metric), ...
                  'o-', 'Color', P.color_order(i,:));
         case 'marker'
-            hdl(i) = plot(T.days_since_surgery(idx), T.(P_in.metric)(idx), ...
+            hdl(i) = plot(T.days_elapsed, T.(P_in.metric), ...
                  ['k', P.marker_order(i), P.line_order{i}], 'linewidth', 1);
         otherwise
             error('This feature has not been implemented for distinguishing among recordings')

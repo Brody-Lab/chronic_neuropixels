@@ -233,7 +233,7 @@ for i = 1:numel(Cells)
         T.Vpp(k,1) = nanmean(Cells{i}.unitVppRaw(idx_cells));
         T.n_elec(k,1) = sum(idx_trode);
         T.shank_plane(k,1) = string(Cells{i}.shank_plane);
-        T.probe_serial{k,1} = Cells{i}.probe_serial;
+        T.probe_serial(k,1) = str2double(Cells{i}.probe_serial);
         T.sess_date(k,1) = Cells{i}.sess_date;
     end
     end

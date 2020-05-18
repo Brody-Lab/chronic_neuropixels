@@ -1,5 +1,5 @@
-% Figure 2--supplement 3 fits a sum of two exponential decays to the unit
-% counts
+% FIGURE2_SUPP_SUM_EXP make the plots for a Figure 2--supplement that
+% provides details about the 
 %
 % The model:
 %
@@ -16,101 +16,89 @@
 % The unit counts for each region are normalized by the average on the
 % first day after the surgery. This normalization removes one fewer
 % parameter to estimate. 
-
-function [] = figure2_supp_sum_exp()
-    %% Parameters
-    re_bootstrap = false;
-    %% Get files
+%=OPTIONAL INPUT
+%
+%   1) re_bootstrap
+%       Recalculate the confidence intervals and probability values. 
+function [] = figure2_supp_sum_exp(varargin)
     P = get_parameters;
-    if re_bootstrap
+    if nargin > 0 && varargin{1}
         if exist('Cells', 'var')
             assemble_exp_decay_data(Cells)
         else
             assemble_exp_decay_data()
         end
+    else
+        load(P.sum_exp_data_path)
     end
-    load(P.sum_exp_data_path)
-    %% Figure
-    figure('Pos', [100, 50, 1200, 700])
-    k = 0;
-    n_col = 3;
-    n_row = 3;
-    label_offset = 0;
-
-    param_list = {'alpha', 'tau_s', 'tau_f'};
+    param_list = {'N1', 'alpha', 'kf', 'ks'};
     nparam=numel(param_list);
-    cond_list = {{'Overall_average'}, ...
-                 {'DV [-10, -2] mm', 'DV [-2, 0] mm'}, ...
-                 {'AP [-8, 0] mm', 'AP [0, 4] mm'}};
-    ncond = numel(cond_list);
-    resp_var = ["unit";  "unit/n_elec" ;  "unit/n_elec"];
-    colors = {{zeros(1,3)}, ...
-              {P.color_order(1,:), P.color_order(2,:)}, ...
-              {P.color_order(3,:), P.color_order(4,:)}};
-       
-    for c=1:ncond
-    for i = 1:nparam
-        for j = i+1:nparam
-            k = k + 1;
-            ax=subplot(n_col, n_row,k);
-            h = [];
-            for cc = 1:numel(cond_list{c})
-                h(cc)=plot_error(ax, T_ed, param_list{i}, param_list{j}, colors{c}{cc}, resp_var{c}, cond_list{c}{cc});
-            end
-            if c < 3;  xlabel(''); end
-            if i==1&&j==2
-                label_panel(gca, P.panel_labels(c), 'FontSize', P.panel_label_font_size);
-                if c == 1
-                    text(0.1, 10, '$N=N_{1}[\alpha e^{-(t-1)/\tau_{fast}}) + (1-\alpha)e^{-(t-1)/\tau_{slow}}]$', ...
-                         'interpreter', 'latex', 'fontsize', P.font_size*4/5)
+    figure('Pos', [100, 0, 1200, 1000])
+    k = 0;
+    n_row = 4;
+    n_col = nparam;
+    i_label = 1;
+    for r = 1:size(T_pval,1)
+        idx{1} = strcmp(T_ed.metric, T_pval.metric{r}) & ...
+                 strcmp(T_ed.cond_name, T_pval.cond_i{r});
+        idx{2} = strcmp(T_ed.metric, T_pval.metric{r}) & ...
+                 strcmp(T_ed.cond_name, T_pval.cond_j{r});    
+        assert(sum(idx{1})==1)
+        assert(sum(idx{2})==1)
+        i_label = i_label + 1;
+        for p = 1:nparam
+            k=k+1;
+            ax=subplot(n_row, n_col, k);
+            set(ax, P.axes_properties{:}, ...
+                    'XLim', [0.5, 2.5], ...
+                    'XTick', [])
+            for i = 1:2
+                x = T_ed.(param_list{p})(idx{i});
+                ci = T_ed.([param_list{p} '_CI'])(idx{i}, :);
+                err_lower = x - ci(1);
+                err_upper = ci(2) - x;
+                
+                switch T_ed.cond_name(idx{i})
+                    case "DV [-10, -2] mm"
+                        clr = P.color_order(1,:);
+                    case "DV [-2, 0] mm"
+                        clr = P.color_order(2,:);
+                    case "AP [-8, 0] mm"
+                        clr = P.color_order(3,:);
+                    case "AP [0, 4] mm"
+                        clr = P.color_order(4,:);
                 end
-%                 legend(h, cond_list{c}, 'location', 'best')
+                errorbar(i, x, err_lower, err_upper, 'o', 'Color', clr, 'linewidth', 1)
             end
+            if r == 1
+                title(P.text.(param_list{p}), 'FontWeight', 'Normal')
+            end
+            if p==1
+                label_panel(ax, P.panel_labels(i_label), 'FontSize', P.panel_label_font_size);
+            end
+            switch param_list{p}
+                case 'kf'
+                    set(gca, 'YScale', 'log', ...
+                             'YLim', [-1e6, -1e-3], ...
+                             'YTick', [-1e6, -1, -0.001], ...
+                             'YTickLabel', {'-10^{6}', '-1', '-10^{-6}'})
+                case 'ks'
+                    set(gca, 'YScale', 'log', ...
+                             'YLim', [-1e0, -1e-6], ...
+                             'YTick', [-1e0, -1e-2, -1e-4, -1e-6], ...
+                             'YTickLabel', {'-1', '-0.01', '-10^{-4}', '-10^{-6}'})
+                otherwise
+                    if min(ylim) > 0
+                        ylim(ylim.*[0,1]);
+                    elseif max(ylim) < 0
+                        ylim(ylim.*[1,0]);
+                    end
+            end
+            pval = T_pval.(['pval_2t_', param_list{p}])(r);
+            xlabel(['{\it p = ' num2str(pval) '}'], 'FontSize', P.font_size)
         end
     end
-    end
-   all_ax = get(gcf, 'children');
-   linkaxes(all_ax([1,4,7]))
-   linkaxes(all_ax([2,5,8]))
-   linkaxes(all_ax([3,6,9]))
-   
-   %% Save
     for i = 1:numel(P.figure_image_format)
-        saveas(gcf, [P.plots_folder_path filesep mfilename], P.figure_image_format{i})
+        saveas(gcf, [P.plots_folder_path filesep 'figure2_supp_sum_exp_BtoE'], P.figure_image_format{i})
     end
-end
-
-function [h] = plot_error(ax, T_ed, x, y, clr, resp_var, cond_name)
-    idx = strcmp(T_ed.resp_var, resp_var) & ...
-          strcmp(T_ed.cond_name, cond_name);
-    if sum(idx)~=1
-        error('Non-unique condition for %s, %s', resp_var, cond_name)
-    end
-    xdata = T_ed.([x '_boot']){idx};
-    ydata = T_ed.([y '_boot']){idx};
-    P = get_parameters;
-    set(ax, P.axes_properties{:});
-    h=plot(ax, xdata, ydata, 'o', 'Color', clr, 'markersize', 2);
-%     plot(ax, median(xdata), median(ydata), ...
-%             '^', 'Color', clr, ...
-%             'linewidth', 2, ...
-%             'markersize', 10, ...
-%             'MarkerfaceColor', 'w');
-    switch x
-        case 'tau_s'
-            set(gca, 'xscale', 'log')
-        case 'alpha'
-            set(gca, 'xlim', [0,1])
-    end
-    switch y
-        case 'tau_s'
-            set(gca, 'yscale', 'log')
-        case 'alpha'
-            set(gca, 'ylim', [0,1])
-    end
-    
-    xlabel([P.text.(x)])
-    ylabel([P.text.(y)])
-    
-    
 end

@@ -1,7 +1,7 @@
-% COMPUTE_MODEL_TIME_CONSTANT compute the half-life of the a model of the sum
-% of two exponential decay terms
+% COMPUTE_MODEL_TIME_CONSTANT compute the effective time constant of the
+% sum-of-exponentials model
 %
-%   y = p(1)*p(2)*exp(-x/p(3)) + p(1)*(1-p(2))*exp(-x/p(4))
+%   y = p(1)*p(2)*exp(x*p(3)) + p(1)*(1-p(2))*exp(x*p(4))
 %
 %=INPUT
 %
@@ -11,7 +11,7 @@
 %
 %=OUTPUT
 %
-%   t_half
+%   t_const
 %       A column vector with the same number of rows as p
 %
 %=OPTIONAL INPUT
@@ -19,23 +19,23 @@
 %   x0
 %       The initial days, by default 1 and specified in GET_PARAMETERS
 
-function t_half = compute_model_time_constant(p, varargin)
+function t_const = compute_model_time_constant(p, varargin)
 P=get_parameters;
 parseobj = inputParser;
 addParameter(parseobj, 'x0', min(P.longevity_time_bin_centers), ...
     @(x) validateattributes(x, {'numeric'}, {'scalar'}))
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
-fprintf('\nComputing model half life... '); tic
+fprintf('\nComputing model time constant... '); tic
 assert(size(p,2)==4, 'The array "p" needs to have four columns')
-syms x
-t_half = nan(size(p,1),1);
-for i = 1:size(p,1)
+t_const = nan(size(p,1),1);
+x = sym('x');
+parfor i = 1:size(p,1)
     alpha = p(i,2);
-    tau_f = p(i,3);
-    tau_s = p(i,4);
-    eqn = exp(-1) == alpha*(exp(-1/tau_f))^x + (1-alpha)*(exp(-1/tau_s))^x;
-    t_half(i,1) = vpasolve(eqn, x);
+    kf = p(i,3);
+    ks = p(i,4);
+    eqn = exp(-1) == alpha*exp(kf*x) + (1-alpha)*exp(ks*x);
+    t_const(i,1) = vpasolve(eqn, x);
 end
-t_half = t_half + P_in.x0;
+t_const = t_const + P_in.x0;
 fprintf('took %0.f seconds\n', toc)

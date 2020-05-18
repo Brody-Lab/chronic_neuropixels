@@ -84,7 +84,7 @@ for i = 1:numel(Cells)
                      implant_log.neuropixels_sn==str2num(Cells{i}.probe_serial);
         Cells{i}.electrodes=NP_get_cell_anatom_loc(implant_log(idx,:), elec_dist_from_tip_um(in_brain));
         Cells{i}.electrodes.in_brain = in_brain(:);
-        Cells{i}.electrodes.index = [1:191, 193:384]' + 383*Cells{i}.unique_bank;
+        Cells{i}.electrodes.index = [1:191, 193:384]' + 384*Cells{i}.unique_bank;
         Cells{i}.electrodes.brain_area = NP_get_region_of_electrode(implant_log(idx,:), ...
                                                                    'sites', [1:191, 193:384]', ...
                                                                    'bank', Cells{i}.unique_bank);

@@ -206,3 +206,6 @@ P.text.SO = 'Shank\newline  ori.';
 P.text.alpha = 'Frac. with fast decay (\alpha)';
 P.text.tau_s = '\tau_{slow}';
 P.text.tau_f = '\tau_{fast}';
+P.text.ks = 'k_{slow}';
+P.text.kf = 'k_{fast}';
+P.text.N1 = 'N_1';

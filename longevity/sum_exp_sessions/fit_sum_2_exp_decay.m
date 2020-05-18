@@ -1,7 +1,7 @@
 % FIT_SUM_2_EXP_DECAY fit a sum of two exponentia decays using least
 % squares with bounds on the parameters.
 %
-%   y = p(1)*p(2)*exp(-(x-x0)/p(3)) + p(1)*(1-p(2))*exp(-(x-x0)/p(4))
+%   y = p(1)*p(2)*exp((x-x0)*p(3)) + p(1)*(1-p(2))*exp((x-x0)*p(4))
 %
 %=INPUT
 %   x
@@ -48,15 +48,15 @@
 function [p_hat, p_CI, p_boot] = fit_sum_2_exp_decay(x,y, varargin)
     P=get_parameters;
     parseobj = inputParser;
-    addParameter(parseobj, 'fit_initial_value', false, ...
+    addParameter(parseobj, 'fit_initial_value', true, ...
         @(x) isscalar(x)&&(x==0||x==1))
-    addParameter(parseobj, 'lower_bounds', [min(y), 0, 1e-6, 1e-6], ...
+    addParameter(parseobj, 'lower_bounds', [min(y), 0, -1e6, -1e6], ...
         @(x) validateattributes(x, {'numeric'}, {'numel', 4}))
     addParameter(parseobj, 'n_boot',P.exp_decay_n_boots, ...
         @(x) validateattributes(x, {'numeric'}, {'numel', 1}))
-    addParameter(parseobj, 'p0', [1,0.5,0.5,100], ...
+    addParameter(parseobj, 'p0', [1,0.5,-0.5,-0.01], ...
         @(x) validateattributes(x, {'numeric'}, {'numel', 4}))
-    addParameter(parseobj, 'upper_bounds', [2*max(y), 1, 1e6, 1e6], ...
+    addParameter(parseobj, 'upper_bounds', [2*max(y), 1, -1e-6, -1e-6], ...
         @(x) validateattributes(x, {'numeric'}, {'numel', 4}))
     addParameter(parseobj, 'x0', min(P.longevity_time_bin_centers), ...
         @(x) validateattributes(x, {'numeric'}, {'scalar'}))
@@ -66,18 +66,20 @@ function [p_hat, p_CI, p_boot] = fit_sum_2_exp_decay(x,y, varargin)
     y=y(:);
     assert(numel(x)==numel(y), 'The number of elements of x and y must match')
     %% Optimization settings
-    opts=optimset('fmincon');
-    opts.Display = 'off';
-    opts.TolFun = 1e-10;
+    opts=optimoptions('fmincon');
+    opts.Display = 'notify';
+    opts.MaxFunctionEvaluations = 1e4;
+    opts.MaxIterations = 1e4;
     %% remove days earlier than the specified initial day
     idx = x>=P_in.x0;
     x=x(idx);
     y=y(idx);
-    if sum(x==P_in.x0)<1
-        error('There is data corresponding to %i days after the surgery', P_in.x0);
+    if sum(x==P_in.x0)<1 && ~P_in.fit_initial_value
+        error('There is no data corresponding to %i days after the surgery', P_in.x0);
     end
     %% initial value
-    if ismember('p0',parseobj.UsingDefaults)
+    if ismember('p0',parseobj.UsingDefaults) && ...
+       sum(x==P_in.x0)>0
         P_in.p0(1) = mean(y(x==P_in.x0));
     end
     if P_in.fit_initial_value
@@ -88,17 +90,13 @@ function [p_hat, p_CI, p_boot] = fit_sum_2_exp_decay(x,y, varargin)
     %% Fit
     if P_in.n_boot > 0
         fprintf('\nFitting %i bootstrap draws...', P_in.n_boot); tic
-        if P_in.fit_initial_value
             n = numel(x);
-        else
             ind_init = find(x==P_in.x0);
             ind_subseq = find(x>P_in.x0);
             n_init = numel(ind_init);
             n_subseq = numel(ind_subseq);
-            p_boot = nan(P_in.n_boot, 4);
-        end
-        i = 0;
-        while i < P_in.n_boot
+            p_boot = cell(P_in.n_boot, 1);
+        parfor i =1:P_in.n_boot
             if P_in.fit_initial_value
                 idx = datasample(1:n, n);
             else
@@ -106,6 +104,7 @@ function [p_hat, p_CI, p_boot] = fit_sum_2_exp_decay(x,y, varargin)
             end
             xboot = x(idx);
             yboot = y(idx);
+            p_boot{i} = nan(1,4);
             if P_in.fit_initial_value
                 [p_minNegLL,~,exit_flag] = ...
                     fmincon(@(p) f_negLL_4(xboot,yboot,p,P_in.x0,y0), ...
@@ -117,8 +116,7 @@ function [p_hat, p_CI, p_boot] = fit_sum_2_exp_decay(x,y, varargin)
                                         [], ...
                                         opts);
                 if exit_flag > 0
-                    i = i+1;
-                    p_boot(i,:) = p_minNegLL;
+                    p_boot{i} = p_minNegLL;
                 end
             else
                 [p_minNegLL,~,exit_flag] = ...
@@ -131,12 +129,12 @@ function [p_hat, p_CI, p_boot] = fit_sum_2_exp_decay(x,y, varargin)
                                     [], ...
                                     opts);
                 if exit_flag > 0
-                    i = i+1;
-                    p_boot(i,2:4) = p_minNegLL;
+                    p_boot{i}(2:4) = p_minNegLL;
                 end
             end
-            
         end
+        p_boot = cell2mat(p_boot);
+        p_boot = p_boot(all(~isnan(p_boot),2),:); % remove iterations that failed to fit
         fprintf(' took %0.f seconds\n', toc);
         p_hat = median(p_boot);
         p_CI = [quantile(p_boot, 0.025); quantile(p_boot, 0.975)];
@@ -150,15 +148,19 @@ function [p_hat, p_CI, p_boot] = fit_sum_2_exp_decay(x,y, varargin)
                     P_in.upper_bounds, ...
                     [], ...
                     opts);
-        se = sqrt(diag(hessian^-1));
-        se=se(:)';
-        v95 = norminv(0.975);
-        p_CI = p_hat + v95*[-1;1].*se;
-        p_boot = [];
+        if nargout> 1
+            se = sqrt(diag(hessian^-1));
+            se=se(:)';
+            v95 = norminv(0.975);
+            p_CI = p_hat + v95*[-1;1].*se;
+            p_boot = [];
+        end
     end
     if ~P_in.fit_initial_value
         p_hat(1) = y0;
-        p_CI(:,1) = y0*[1;1];
+        if nargout> 1
+            p_CI(:,1) = y0*[1;1];
+        end
         p_boot(:,1) = y0*ones(size(p_boot,1),1);
     end
 end
@@ -169,7 +171,7 @@ end
 %
 % The model is 
 %
-%   y = p(1)*p(2)*exp(-x/p(3)) + p(1)*(1-p(2))*exp(-x/p(4)) + e
+%   y = p(1)*p(2)*exp(x*p(3)) + p(1)*(1-p(2))*exp(x*p(4)) + e
 %
 % e ~ N(0,sigma2), independent of X, and Cov(ei,ej) = 0, i.e. independent
 % across observations
@@ -197,7 +199,7 @@ end
 %   LL
 %       the loglikelihood
 function negLL = f_negLL_4(x,y,p,x0,y0)
-    y_hat = (p(2)*exp(-(x-x0)/p(3)) + (1-p(2))*exp(-(x-x0)/p(4)));
+    y_hat = (p(2)*exp((x-x0)*p(3)) + (1-p(2))*exp((x-x0)*p(4)));
     if nargin < 4 ||isempty(y0)
         y_hat = y_hat * p(1);
     else
@@ -211,7 +213,7 @@ function negLL = f_negLL_4(x,y,p,x0,y0)
 end
 %%
 function negLL = f_negLL_3(x,y,p,x0,y0)
-    y_hat = y0*(p(1)*exp(-(x-x0)/p(2)) + (1-p(1))*exp(-(x-x0)/p(3)));
+    y_hat = y0*(p(1)*exp((x-x0)*p(2)) + (1-p(1))*exp((x-x0)*p(3)));
     n = numel(y);
     residuals = y-y_hat;
     sigma2_hat = 1/(n-2) * sum(residuals.^2); % though homoskedasticity most likely not true

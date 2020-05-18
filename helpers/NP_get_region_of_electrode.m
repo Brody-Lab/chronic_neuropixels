@@ -10,7 +10,7 @@ rat = implant.rat;
 if strcmp(rat, 'T182'); rat = 'T181'; end % T181 and T182 have their probes in the same parts of their brain
 
 switch rat
-    case {'T176', 'T212'}
+    case {'T176', 'T212', 'T224', 'T249'}
         Region_from_tip_um.MO  = [0 393.92];
         Region_from_tip_um.PrL = max(Region_from_tip_um.MO)  + [0, 1891.6];
         Region_from_tip_um.Cg1 = max(Region_from_tip_um.PrL) + [0, 793.95];
@@ -45,7 +45,7 @@ switch rat
     case 'T209'
         Region_from_tip_um.aIC = 137 + [0 2000];
         Region_from_tip_um.SC = Region_from_tip_um.aIC + [2000 3830];
-    case {'T219', 'T223'}
+    case {'T219', 'T223', 'T227'}
         Region_from_tip_um.vStr = 137 + [0 2610];
         Region_from_tip_um.dStr = max(Region_from_tip_um.vStr) + [0 2710];
         Region_from_tip_um.M1 = max(Region_from_tip_um.dStr) + [0 2580];
