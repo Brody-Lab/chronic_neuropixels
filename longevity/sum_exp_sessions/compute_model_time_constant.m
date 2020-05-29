@@ -34,8 +34,16 @@ parfor i = 1:size(p,1)
     alpha = p(i,2);
     kf = p(i,3);
     ks = p(i,4);
-    eqn = exp(-1) == alpha*exp(kf*x) + (1-alpha)*exp(ks*x);
-    t_const(i,1) = vpasolve(eqn, x);
+    try
+        eqn = exp(-1) == alpha*exp(kf*x) + (1-alpha)*exp(ks*x);
+        t_const(i,1) = vpasolve(eqn, x);
+    catch ME
+        if ks > 0
+            t_const(i,1) = 10^6;
+        else
+            rethrow(ME)
+        end
+    end
 end
 t_const = t_const + P_in.x0;
 fprintf('took %0.f seconds\n', toc)

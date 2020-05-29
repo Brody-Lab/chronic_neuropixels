@@ -2,6 +2,6 @@
 
 if ~exist('S', 'var')
     P=get_parameters;
-    load(P.sum_exp_trodes);
+    load(P.sum_exp_trodes.data_path);
 end
-sum_exp_trodes_plot_coef(S)
+sum_exp_trodes_plot_coef(S, 'mdl_inds', 1:5)

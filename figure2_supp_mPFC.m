@@ -25,10 +25,10 @@ n_row = 1;
 label_offset = 0;
 T = get_metrics_from_Cells(Cells, 'condition_on', 'brain_area', ...
                                   'brain_area', {{'other'},{'PrL', 'MO'}});
-for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
+for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}; metric=metric{:};
     k = k + 1;
     subplot(n_row, n_col,k);
-    hdl = plot_average_stability(T, 'metric', metric{:}, ...
+    hdl = plot_average_stability(T, 'metric', metric, ...
                             'print_sample_size', mod(k,n_col)==1, ...
                               'axes', gca, ...
                               'legend_on', mod(k,n_col)==1, ...
@@ -36,7 +36,7 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}
     hdl(1).mainLine.Color=zeros(1,3);
     hdl(1).patch.FaceColor=zeros(1,3);
     label_panel(gca, P.panel_labels(k+label_offset), 'FontSize', P.panel_label_font_size);
-    title(P.text.(metric{:}))
+    title(P.text.(metric))
     lgd=findobj(gcf, 'Type', 'Legend');
     lgd.String = {'mPFC', 'Other regions'};
 end
