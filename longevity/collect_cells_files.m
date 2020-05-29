@@ -10,7 +10,7 @@ P = get_parameters;
 %% import adrian's cells files and run any code which is specific to these files
  % convert to matlab table, will need to be redownloaded if google sheet changes!
 recordings_table = read_recordings_log(P.Adrians_recordings_path);
-use = find(~ismissing(recordings_table.cells_file_figure2) & recordings_table.usedForFigure2==1); % find recordings with a cells file path specified and load those files
+use = find(~ismissing(recordings_table.cells_file) & recordings_table.used_in_chronic_npx_ms==1); % find recordings with a cells file path specified and load those files
 for i=1:length(use)
     tmp = load(recordings_table.cells_file_figure2(use(i)));
     fields = fieldnames(tmp);
