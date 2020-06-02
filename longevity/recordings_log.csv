@@ -1,4 +1,4 @@
-recording_name,rat_name,date,channel_map,reference,used for figure 2,cells_file_figure2,task,notes,probe serial number,ap.bin SHA1,sorted,perturbation,artifacts,representative behavior session,approximate duration (s)
+recording_name,rat_name,date,channel_map,reference,used_in_chronic_npx_ms,cells_file,task,notes,probe serial number,ap.bin SHA1,sorted,perturbation,artifacts,representative behavior session,approximate duration (s)
 A230_2019_07_11a,A230,2019_07_11,bank0,,0,,PBups,"only a few dozen trials, restarted recording",17131308571,,0,,,,
 A230_2019_07_11b,A230,2019_07_11,bank0,,0,,PBups,"260 trials, 65% correct",17131308571,,0,,,,
 A230_bank0_2019_07_11b_17131308571_short,A230,2019_07_11,bank0,,1,X:\RATTER\PhysData\NP_sorted\Adrian\A230\A230_bank0_2019_07_11b_17131308571_short\spikesort_2020_03_12_17_50_58_ks2jrc\2019-07-11_2_g0_t0.exported.imec1.ap_not_curated.Cells.mat,PBups,first ten minutes only,17131308571,,0,,,,
