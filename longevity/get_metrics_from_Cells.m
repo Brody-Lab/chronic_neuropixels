@@ -4,7 +4,7 @@
 %=INPUT
 %
 %   Cells
-%       A cel array of structures made by COLLECT_CELL_FILES and
+%       A cell array of structures made by COLLECT_CELL_FILES and
 %       POSTPROCESS_CELLS
 %
 %=OUTPUT
