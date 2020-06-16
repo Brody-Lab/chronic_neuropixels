@@ -62,8 +62,9 @@ set(gca, P.axes_properties{:})
 set(gca, P.custom_axes_properties.longevity{:});
 for i = 1:numel(rat_name)
     T = get_metrics_from_Cells(Cells, 'condition_on', 'EI', ...
-                                'EI_bin_edges', unique_bank*384 + [1, 384]);
+                                       'EI_bin_edges', unique_bank*384 + [1, 384]);
     T = T(T.rat==rat_name(i),:);
+    T = T(T.n_elec > 1,:);
     % if there are multiple probes per animal, use only the one with the
     % largest number of recordings
     Ct = groupcounts(T, 'probe_serial'); 
