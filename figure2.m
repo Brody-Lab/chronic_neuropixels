@@ -7,7 +7,9 @@
 from_scratch = false; % Do you want to reassemble the data files from scratch?
 P=get_parameters;
 if from_scratch
-    collect_cell_files
+    % note: regnerating these data files from scratch requires raw files and
+    % data wrangling code not in the chronic_neuropixels repository.    
+    collect_cells_files
     postprocess_Cells
     assemble_exp_decay_data(Cells)
 else

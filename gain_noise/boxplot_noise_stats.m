@@ -97,7 +97,7 @@ if strcmp(P_in.var,'noise_uV')
         case 'median'
             ylabel({'Median Noise','(\muV_R_M_S)'});
         case '@(x)mean(x>20)*100'
-            ylabel('% > 20\muV_R_M_S');        
+            ylabel({'Percent >','20\muV_R_M_S'});        
     end
 elseif strcmp(P_in.var,'bank_0_noise_z') && strcmp(func2str(P_in.stat_func),'rsquare')
     ylabel('Across-bank R^2');
