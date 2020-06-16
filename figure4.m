@@ -27,7 +27,7 @@ if P_input.from_scratch
     collect_cells_files
     postprocess_Cells    
     add_cumulative_days_implanted
-    %compute_choice_selectivity    
+    compute_choice_selectivity    
 else
     if ~exist('Cells', 'var')
         fprintf('Loading the variabe CELLS...')
@@ -141,14 +141,15 @@ set(gca, P.axes_properties{:},'xlim',[-1 0.5]);
 % avg = cell2mat(cellfun(@(x) mean(abs(x.AUC-0.5)), ChoiceMod, 'uni', 0)');
 % hline = plot(ChoiceMod{i}.time_s, avg, 'linewidth', 1);
 for i = 1:numel(ChoiceMod)
-    hdl(i) = shadedErrorBar(ChoiceMod{i}.time_s, abs(ChoiceMod{i}.AUC-0.5), {@mean, @sem});
+    hdl(i) = shadedErrorBar(ChoiceMod{i}.time_s, abs(ChoiceMod{i}.AUC-0.5)+0.5, {@mean, @sem});
     hdl(i).mainLine.Color = P.explant_color_order{i};
     hdl(i).mainLine.LineWidth = 1;
     hdl(i).patch.FaceColor = P.explant_color_order{i};
     hdl(i).patch.FaceAlpha = 0.6;
 end
-ylim(ylim.*[0,1]);
-plot([0,0],ylim, 'k-', 'linewidth', 0.5);
+yl=ylim;
+ylim([0.5 yl(2)]);
+plot([0,0],[0.5 yl(2)], 'k-', 'linewidth', 0.5);
 xlabel('Time from movement (s)')
 ylabel({'Average','choice selectivity'})
 label_hdl(k) = label_panel(gca, P.panel_labels(k), 'FontSize', P.panel_label_font_size)

@@ -12,7 +12,7 @@ P = get_parameters;
 recordings_table = read_recordings_log(P.Adrians_recordings_path);
 use = find(~ismissing(recordings_table.cells_file) & recordings_table.used_in_chronic_npx_ms==1); % find recordings with a cells file path specified and load those files
 for i=1:length(use)
-    tmp = load(recordings_table.cells_file_figure2(use(i)));
+    tmp = load(recordings_table.cells_file(use(i)));
     fields = fieldnames(tmp);
     for f=1:length(fields)
         Cells_AGB(i).(fields{f}) = tmp.(fields{f});
@@ -52,8 +52,22 @@ for i=1:length(cells_paths)
     Cells_TZL(i).unique_bank = unique(Cells_TZL(i).bank);    
     row_idx = strcmp(implant_log.rat,Cells_TZL(i).rat) & implant_log.neuropixels_sn==str2num(Cells_TZL(i).probe_serial);        
     Cells_TZL(i).bank_electrode_depths = implant_log.depth_mm(row_idx) - bank_electrodes{Cells_TZL(i).unique_bank+1}./100;
-    Cells_TZL(i).electrode = Cells_TZL(i).recording_site + 384*Cells_TZL(i).unique_bank;       
+    Cells_TZL(i).electrode = Cells_TZL(i).recording_site + 384*Cells_TZL(i).unique_bank;     
 end
 
 %% since Adrian's and Thomas' cells files have slightly different fields, concatenate into a cell array, not a struct array
 Cells = [num2cell(Cells_AGB) num2cell(Cells_TZL)];
+
+%% trim unnecessary fields
+trim_fields = {'raw_spike_time_s','meanWfGlobalRaw','waveformSim'};
+for i=1:length(Cells)
+    for f=1:length(trim_fields)
+        if isfield(Cells{i},trim_fields{f})
+            Cells{i} = rmfield(Cells{i},trim_fields{f});
+        end
+        if isfield(Cells{i},'waveform') && isfield(Cells{i}.waveform,trim_fields{f})
+            Cells{i}.waveform = rmfield(Cells{i}.waveform,trim_fields{f});            
+        end
+    end
+end
+            

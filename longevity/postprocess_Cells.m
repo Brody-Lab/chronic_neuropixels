@@ -35,7 +35,7 @@ for i=1:length(Cells)
     Cells{i}.n_good_units_superficial = sum(Cells{i}.ks_good(Cells{i}.DV<Cells{i}.median_electrode_depth));    
     Cells{i}.n_units_deep = length(Cells{i}.ks_good(Cells{i}.DV>Cells{i}.median_electrode_depth));
     Cells{i}.n_good_units_deep = sum(Cells{i}.ks_good(Cells{i}.DV>Cells{i}.median_electrode_depth));
-    n_spikes = sum(cellfun(@numel,Cells{i}.raw_spike_time_s));
+    %n_spikes = sum(cellfun(@numel,Cells{i}.raw_spike_time_s));
 end
 %% Fix Thomas's calculation of cell position
 implant_log = readtable(P.implant_log_path);
