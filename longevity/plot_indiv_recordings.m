@@ -31,25 +31,38 @@
 function [] = plot_indiv_recordings(Cells, brain_region, varargin)
 parseobj = inputParser;
 addParameter(parseobj, 'axes', [], @(x) isempty(x) || isa(x,  'matlab.graphics.axis.Axes'));
-addParameter(parseobj, 'metric', 'n_units', ...
+addParameter(parseobj, 'metric', 'unit', ...
     @(x) validateattributes(x, {'string', 'cell', 'char'}, {}))
 addParameter(parseobj, 'varying', 'marker', @(x) ismember(x, {'color', 'marker'}));
 addParameter(parseobj, 'ylabel_on', true, @(x) isscalar(x) && islogical(x));
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
-assert(ismember(brain_region, {'mFC', 'MCtx_ADS', 'AVS'}))
+assert(ismember(brain_region, {'mFC', 'MCtx_ADS', 'MCtx', 'ADS', 'AVS'}))
 switch brain_region
     case 'mFC'
         rat_name = ["T212"; "T224"; "T249"];
         unique_bank = 0;
+        brain_area = {};
         title_text = 'Medial frontal ctx';
+    case 'ADS'
+        rat_name = ["T181"; "T182"; "T219"];
+        unique_bank = 1;
+        brain_area = {'Str', 'dStr'};
+        title_text = 'Dorsal striatum';
     case 'MCtx_ADS'
         rat_name = ["T181"; "T182"; "T219"];
         unique_bank = 1;
+        brain_area = {};
         title_text = 'Motor ctx and dorsal striatum';
+    case 'MCtx'
+        rat_name = ["T181"; "T182"; "T219"];
+        unique_bank = 1;
+        brain_area = {'M1', 'M2'};
+        title_text = 'Motor ctx';
     case 'AVS'
         rat_name = ["T181"; "T182"; "T219"];
         unique_bank = 0;
+        brain_area = {};
         title_text = 'Ventral striatum';
 end
 P = get_parameters;
@@ -61,8 +74,15 @@ end
 set(gca, P.axes_properties{:})
 set(gca, P.custom_axes_properties.longevity{:});
 for i = 1:numel(rat_name)
-    T = get_metrics_from_Cells(Cells, 'condition_on', 'EI', ...
-                                       'EI_bin_edges', unique_bank*384 + [1, 384]);
+    if ~isempty(brain_area)
+        T = get_metrics_from_Cells(Cells, 'condition_on', {'EI', 'brain_area'}, ...
+                                          'brain_area', {brain_area, {'other'}}, ...
+                                          'EI_bin_edges', unique_bank*384 + [1, 384]);
+        T = T(contains(T.brain_area, brain_area),:);
+    else
+        T = get_metrics_from_Cells(Cells, 'condition_on', 'EI', ...
+                                          'EI_bin_edges', unique_bank*384 + [1, 384]);
+    end
     T = T(T.rat==rat_name(i),:);
     T = T(T.n_elec > 1,:);
     % if there are multiple probes per animal, use only the one with the

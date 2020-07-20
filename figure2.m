@@ -32,7 +32,7 @@ label_offset = 0;
 fit_type = 'exponential';
 ax_hdl={};
 %% Plot individual recordings
-for region = {'mFC', 'MCtx_ADS', 'AVS'}
+for region = {'mFC', 'MCtx', 'AVS'}
     k = k + 1;
     ax_hdl{k} = subplot(n_row, n_col,k);
     plot_indiv_recordings(Cells, region{:}, ...

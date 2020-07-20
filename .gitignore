@@ -37,5 +37,7 @@ $RECYCLE.BIN/
 \histology
 \CAD exported images
 \dataset_to_be_uploaded
+\data.zip
+\archived data
 
 # End of https://www.gitignore.io/api/windows
