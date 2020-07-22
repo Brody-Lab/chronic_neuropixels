@@ -11,7 +11,7 @@ S = sum_exp_trodes_compute_CI(S, 'i_mdl', 1:5);
 save(P.sum_exp_trodes.data_path, 'S')
 fprintf('\nDone after %0.f seconds!\n', toc)
 
-%%
+%% Single units
 P = get_parameters;
 S = sum_exp_trodes_select_mdl(Cells, 'Iterations', 10, 'KFold', 5, 'noise', 'poisson', 'metric', 'single_unit');
 S = sum_exp_trodes_compute_CI(S, 'i_mdl', 1:5);

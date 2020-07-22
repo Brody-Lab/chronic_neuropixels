@@ -1,4 +1,4 @@
-% MAKE_DESIGN_MATRIX make a design matrix (table) from T_TRODE
+% MAKE_DESIGN_MATRIX make a design matrix (in a table form) from T_TRODE
 %
 %=INPUT
 %
@@ -9,37 +9,38 @@
 %
 %   T_dsgn
 %
-%       A table that renames the experimental factors in T_trode according
-%       to the optional input REGRESSORS
+%       A table that extracts the regressors from "T_trode" according to
+%       "model_parameters". "T_dsgn" has the same number of rows as
+%       "T_trode" and the same number of columns as the number of elements
+%       of "model_parameters."
 %
 %=OPTIONAL INPUT
 %
-%    regressors
-%       A string or cell array specifying the names of the regressors. The
-%       regressors in the N1 term should start with "N1_" and those in the
-%       change rate term should stat with "k_". A regressors whose name
-%       "N1_xxx" is a replica of T_trode.(xxx). If xxx is "const," then a
-%       vector of ones is created instead.
+%   model_parameters
+%       A char vector, string array, or cell array of char specifying the
+%       model parameters. Each parameter must be a member of
+%       P.possible_model_parameters. The parameters in the N1 term should
+%       start with "N1_" and those in the change rate term should stat with
+%       "k_". 
 function T_dsgn = make_design_matrix(T_trode, varargin)
 P = get_parameters;
 parseobj = inputParser;
-addParameter(parseobj, 'regressors', P.sum_exp_trodes.regressors, @(x) all(ismember(x, P.longevity_metrics)))
+addParameter(parseobj, 'model_parameters', P.sum_exp_trodes.default_model_parameters, ...
+    @(x) all(ismember(x, P.sum_exp_trodes.possible_model_parameters)))
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
-n = size(T_trode,1);
-T_trode_var = T_trode.Properties.VariableNames;
-for i = 1:numel(P_in.regressors)
-    if contains(P_in.regressors{i}, 'const')
-        T_dsgn.(P_in.regressors{i}) = ones(n,1);
+for i = 1:numel(P_in.model_parameters)
+    if contains(P_in.model_parameters{i}, 'const')
+        T_dsgn.(P_in.model_parameters{i}) = ones(size(T_trode,1),1);
     else
-        idx_ = regexp(P.sum_exp_trodes.regressors{i}, '_');
-        exp_fact_name = P.sum_exp_trodes.regressors{i}(idx_+1:end);
-        idx = ismember(T_trode_var, exp_fact_name);
+        idx_= regexp(P_in.model_parameters{i}, '_');
+        regressor_name = get_regressor_name(P_in.model_parameters{i});
+        idx = ismember(T_trode.Properties.VariableNames, regressor_name);
         if sum(idx)~=1
             error('Cannot find unique variable in T_TRODE corresponding to the regressor %s', ...
-                   P.sum_exp_trodes.regressors{i})
+                   P_in.model_parameters{i})
         end
-        T_dsgn.(P_in.regressors{i}) = T_trode{:,idx};
+        T_dsgn.(P_in.model_parameters{i}) = T_trode{:,idx};
     end
 end
 T_dsgn = struct2table(T_dsgn);

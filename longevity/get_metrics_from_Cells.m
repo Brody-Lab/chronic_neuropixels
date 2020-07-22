@@ -54,6 +54,10 @@
 %       If CONDITION_ON includes 'ML', then this increasing vector
 %       specifies the bin edges for binning ML positions
 %
+%   standardize_area_names
+%       A logical scalar specifying whether to standarized the names across
+%       recording sessions
+%
 %   x0
 %       The first day to include.
 function T = get_metrics_from_Cells(Cells, varargin)
@@ -76,11 +80,15 @@ addParameter(parseobj, 'EI_bin_edges', P.EI_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
 addParameter(parseobj, 'ML_bin_edges', P.ML_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
+addParameter(parseobj, 'standardize_area_names', false, @(x) isscalar(x) && islogical(x))
 addParameter(parseobj, 'exclude_holderless', true, @(x) isscalar(x) && islogical(x))
 addParameter(parseobj, 'exclude_3A', false, @(x) isscalar(x) && islogical(x))
 addParameter(parseobj, 'x0', min(P.longevity_time_bin_centers), @(x) isscalar(x) && isnumeric(x))
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
+if P_in.standardize_area_names
+    Cells = standardize_brain_area_names(Cells);
+end
 %% Create the bin edges for conditions that aren't used
 if ~contains(P_in.condition_on, 'AP')
     AP_bin_edges = [-inf, inf];

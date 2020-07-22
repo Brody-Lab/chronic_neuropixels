@@ -11,12 +11,17 @@
 %
 %   mdl_inds
 %       Linear indices of the models to be plotted
+%
+%   rescale_parameters
+%       A scalar logical specifying whether to scale the parameters by the
+%       pre-normalized range of the regressors
 function [] = sum_exp_trodes_plot_coef(S, varargin)
     P=get_parameters;
     parseobj = inputParser;
     P = get_parameters;
     addParameter(parseobj, 'mdl_inds', 1, ...
         @(x) validateattributes(x, {'numeric'}, { 'integer', 'nonzero'}))
+    addParameter(parseobj, 'rescale_parameters', true, @(x) isscalar(x) && islogical(x))
     parse(parseobj, varargin{:});
     P_in = parseobj.Results;
     figure('Pos', [100, 50, 2000, 600])
@@ -28,26 +33,30 @@ function [] = sum_exp_trodes_plot_coef(S, varargin)
     %%
     k = k + 1;
     ax_hdl=subplot(n_row,n_col, k);
-    plot_multiple(ax_hdl, S, 'N1', P_in.mdl_inds);
+    plot_multiple(ax_hdl, S, 'N1', 'mdl_inds', P_in.mdl_inds, ...
+                                   'rescale_parameters', P_in.rescale_parameters);
     ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*0.82;
     ax_hdl.OuterPosition(4) = ax_hdl.OuterPosition(4)*0.9;
     %%
     k = k + 1;
     ax_hdl=subplot(n_row,n_col, k);
-    plot_multiple(ax_hdl, S, 'alpha', P_in.mdl_inds);
+    plot_multiple(ax_hdl, S, 'alpha', 'mdl_inds',  P_in.mdl_inds, ...
+                                      'rescale_parameters', P_in.rescale_parameters);
     ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*0.22;
     ax_hdl.OuterPosition(4) = ax_hdl.OuterPosition(4)*0.775;
     %%
     k = k + 1;
     ax_hdl=subplot(n_row,n_col, k);
-    plot_multiple(ax_hdl, S, 'k0', P_in.mdl_inds);
+    plot_multiple(ax_hdl, S, 'k0', 'mdl_inds',  P_in.mdl_inds, ...
+                                   'rescale_parameters', P_in.rescale_parameters);
     ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*0.45;
     ax_hdl.OuterPosition(1) = ax_hdl.OuterPosition(1)+0.1;
     ax_hdl.OuterPosition(4) = ax_hdl.OuterPosition(4)*0.835;
     %%
     k = k + 1;
     ax_hdl=subplot(n_row,n_col, k);
-    plot_multiple(ax_hdl, S, 'k', P_in.mdl_inds);
+    plot_multiple(ax_hdl, S, 'k', 'mdl_inds',  P_in.mdl_inds, ...
+                                  'rescale_parameters', P_in.rescale_parameters);
     ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*0.9;
     %%
     k = k + 1;
@@ -94,55 +103,62 @@ end
 %
 %   param_type
 %       The type of parameter to be ploted
+
+%
+%=OPTIONAL INPUT
 %
 %   mdl_inds
 %       The model indices to be plotted
+%
+%   rescale_parameters
+%       A scalar logical specifying whether to scale the parameters by the
+%       pre-normalized range of the regressors
 
-function [] = plot_multiple(ax, S, param_type, mdl_inds)
+function [] = plot_multiple(ax, S, param_type, varargin)
     P = get_parameters;
     assert(isa(ax, 'matlab.graphics.axis.Axes'))
     assert(isscalar(ax))
     assert(any(ismember({'alpha', 'k0', 'N1', 'k'}, param_type)));
-    validateattributes(mdl_inds, {'numeric'}, {'integer'})
-    
-    % copy the data to manipulat them a bit
-    D.b = S.T_res.b_med;
-    D.cil = S.T_res.cil;
-    D.ciu = S.T_res.ciu;
-    % need this to select the parameters of the type to be plotted
-    regressor_idx.alpha = 1;
-    regressor_idx.k0 = 2:3;
-    var_names = S.T_mdl.Properties.VariableNames;
-    regressor_idx.N1 = find(contains(var_names, 'N1_'))+3;
-    regressor_idx.k = find(contains(var_names, 'k_'))+3;
-    % all the regressors were normalized to be [0,1] 
-    % now, we are just unnormalize it
-    normalization = [1,1, 1, 1, S.exp_factors.range([1, 3:5]), S.exp_factors.range([1, 3:7])];
-    for d = {'b', 'cil', 'ciu'}; d=d{:};
-        D.(d) = D.(d) ./normalization;
-        % set regressors that weren't fit to hve a coefficient of 0
-        D.(d)(isnan(D.(d))) = 0;
-        % select the parameters of the type to be plotted
-        D.(d) = D.(d)(:,regressor_idx.(param_type));
+    parseobj = inputParser;
+    P = get_parameters;
+    addParameter(parseobj, 'mdl_inds', 1, ...
+        @(x) validateattributes(x, {'numeric'}, { 'integer', 'nonzero'}))
+    addParameter(parseobj, 'rescale_parameters', true, @(x) isscalar(x) && islogical(x))
+    parse(parseobj, varargin{:});
+    P_in = parseobj.Results;
+    if P_in.rescale_parameters
+        [b, cil, ciu] = rescale_parameters(S.T_res, S.T_mdl, S.T_regressor);
+    else
+        b = S.T_res.b_med;
+        cil=S.T_res.cil;
+        ciu=S.T_res.ciu;
     end
-    % make xticklabels
+    b(isnan(b))=0; % parameters that weren't fitted were set as nan
+    cil(isnan(cil))=0;
+    ciu(isnan(ciu))=0;
+    parameter_types = ["alpha", "k0", "k0", ...
+        string(cellfun(@get_parameter_type, ...
+                        S.T_mdl.Properties.VariableNames, 'uni', 0))];
+    b = b(:, parameter_types == param_type);
+    cil = cil(:, parameter_types == param_type);
+    ciu = ciu(:, parameter_types == param_type);
+    parameter_names = ["alpha", "k_fast", "k_slow",...
+                       string(S.T_mdl.Properties.VariableNames)];
+    parameter_names = parameter_names(parameter_types == param_type);
+    xtlabels = cellfun(@lookup_latex_markup_of_parameter, parameter_names, 'uni', 0);
     % set up plot
-    n = numel(regressor_idx.(param_type));
+    n = size(b,2);
     set(ax, P.axes_properties{:}, ...
              'XLim', [0.5 n+0.5], ...
              'XTick', 1:n, ...
              'XTicklabelRotation', 0, ...
-             'XTickLabel', P.sum_exp_trodes.variable_labels(regressor_idx.(param_type)), ...
+             'XTickLabel', xtlabels, ...
              'TickLabelInterpreter', 'latex')
     h=refline(0,0); 
     set(h, 'Color', 'k')
     % plot each model
-    for i = 1:numel(mdl_inds)
-        ind=mdl_inds(i);
-        b = D.b(ind,:);
-        cil = D.cil(ind,:);
-        ciu = D.ciu(ind,:);
-        
+    for i = 1:numel(P_in.mdl_inds)
+        ind=P_in.mdl_inds(i);
         if i == 1
             col = [0.15, 0.15, 0.8];
             lw = 1;
@@ -151,12 +167,12 @@ function [] = plot_multiple(ax, S, param_type, mdl_inds)
             lw = 0.5;
         end
         x=(1:n);
-        if numel(mdl_inds)>1
-            x=x-0.3 + i/numel(mdl_inds)*0.6;
+        if numel(P_in.mdl_inds)>1
+            x=x-0.3 + i/numel(P_in.mdl_inds)*0.6;
         end
-        hdl(i) = errorbar(x, b, b-cil,  ciu-b, 'o', 'Color', col, 'Markersize', 3, 'linewidth',lw);
+        hdl(i) = errorbar(x, b(ind,:), b(ind,:)-cil(ind,:),  ciu(ind,:)-b(ind,:), 'o', 'Color', col, 'Markersize', 3, 'linewidth',lw);
     end
-    if any(mdl_inds==1) && strcmp(param_type, 'k')
+    if any(P_in.mdl_inds==1) && strcmp(param_type, 'k')
         legend(hdl(1), 'Highest LL', 'Location', 'Best', 'interpreter', 'latex')
     end
     
@@ -173,10 +189,10 @@ function [] = plot_multiple(ax, S, param_type, mdl_inds)
             title(['Baseline' newline 'change' newline 'rates'], 'fontweight', 'normal', 'interpreter', 'latex')
         case 'N1'
             title(['Coefficients in the' newline 'initial unit count ($N_{1}$)'], 'fontweight', 'normal', 'interpreter', 'latex')
-            ylim([-0.5, 1.5])
+%             ylim([-0.5, 1.5])
         case 'k'
             title('Coefficients in the change rate ($k$)', 'fontweight', 'normal', 'interpreter', 'latex')
-            ylim([-0.025, 0.015])
+%             ylim([-0.025, 0.015])
             ytl = arrayfun(@num2str, yticks, 'uni', 0);
             yticklabels(ytl)
         case 'k0'

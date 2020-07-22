@@ -134,3 +134,4 @@ for i = 1:numel(Cells)
             Cells{i}.shank_plane = "coronal";
     end
 end
+%% Standardize names of brain areas

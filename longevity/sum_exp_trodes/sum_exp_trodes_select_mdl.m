@@ -17,17 +17,19 @@
 %
 %   S
 %       A structure with the following fields
-%       - T_mdl, a table of models
+%       - T_mdl, a table indicating whether each parameter were fitted in
+%       each model variant
 %       - T_trode, a table of each electrode and each recoding
-%       - factor_range, the range of each experimental factor in T_trode,
-%       before being normalized to between [0,1] in T_trode. This is
-%       required to knowing the coefficient weight of an experimental
-%       factor per the unit of that factor.
+%       - T_regressor, a table specifying the range for each regressor
+%       - T_res, a table of results
+%       - P_in, a structure of the input parameters
+%       - T_dsgn, the design matrix
 %       
 %=OPTIONAL INPUT, NAME-VALUE PAIRS
 %
 %   iterations
-%       The number of times the model is split
+%       The number of times the data are split in half, one part used for
+%       model selection and another for parameter estimation.
 %
 %   KFold
 %       Number of cross-validation folds
@@ -37,30 +39,45 @@
 %       'event_rate', which is the total firing rate, or 'Vpp',
 %       peak-to-peak amplitude of the spike waveform
 %
+%   noise
+%       The noise model: "gaussian" or "poisson"
+%
+%   model_parameters
+%       A char vector, string array, or a cell array of char that specified
+%       the set of model parameters. Each parameter must be a member of
+%       P.possible_model_parameters
+%
+%   shuffle
+%       A logical scalar specifying whether to shuffle the rows for each
+%       variable independently.
+%       
 function S = sum_exp_trodes_select_mdl(Cells, varargin)
     P = get_parameters;
     parseobj = inputParser;
-    addParameter(parseobj, 'KFold', 5, ...
-        @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer', 'nonzero'}))
-    addParameter(parseobj, 'noise', 'gaussian', @(x) any(strcmpi(x, {'poisson', 'gaussian'})))
-    addParameter(parseobj, 'metric', 'unit', @(x) all(ismember(x, P.longevity_metrics)))
     addParameter(parseobj, 'iterations', 10, ...
             @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer', 'nonzero'}))
+    addParameter(parseobj, 'KFold', 5, ...
+        @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer', 'nonzero'}))
+    addParameter(parseobj, 'metric', 'unit', @(x) all(ismember(x, P.longevity_metrics)))
+    addParameter(parseobj, 'model_parameters', P.sum_exp_trodes.default_model_parameters, ...
+        @(x) all(ismember(x, P.sum_exp_trodes.possible_model_parameters)))
+    addParameter(parseobj, 'noise', 'gaussian', @(x) any(strcmpi(x, {'poisson', 'gaussian'})))
     addParameter(parseobj, 'shuffle', false, @(x) x==0 || x==1)
     parse(parseobj, varargin{:});
     P_in = parseobj.Results;
-    [T_trode, exp_factors] = ...
-              make_T_trode(Cells, 'x0', P.x0, ...
+    [T_trode, T_regressor] = ...
+              make_T_trode(Cells, 'model_parameters', P_in.model_parameters, ...
+                                  'normalize_regressors', true, ...
                                   'unit_distance', P.unit_distance, ...
-                                  'normalize_factors', true);
+                                  'x0', P.x0);
     if P_in.shuffle
         n = size(T_trode,1);
-        for i = 1:numel(exp_factors.name)
-            T_trode.(exp_factors.name{i}) = T_trode.(exp_factors.name{i})(randperm(n));
+        for i = 1:numel(T_regressor.name)
+            T_trode.(T_regressor.name{i}) = T_trode.(T_regressor.name{i})(randperm(n));
         end
     end
-    T_mdl = make_T_mdl; % that needs to be changed to include the constant terms
-    T_dsgn = make_design_matrix(T_trode);
+    T_mdl = make_T_mdl('model_parameters', P_in.model_parameters);
+    T_dsgn = make_design_matrix(T_trode, 'model_parameters', P_in.model_parameters);
     switch P_in.noise
         case 'gaussian'
             crossval_mdl = @crossval_gaussian;
@@ -76,7 +93,7 @@ function S = sum_exp_trodes_select_mdl(Cells, varargin)
     Err = nan(size(T_mdl,1), P_in.iterations);
     n_trodes = size(T_trode,1);
     trodes_used = false(n_trodes, P_in.iterations);
-    b = arrayfun(@(x) nan(numel(P.sum_exp_trodes.regressors)+3, P_in.iterations), (1:size(T_mdl,1))', 'uni', 0);
+    b = arrayfun(@(x) nan(numel(P_in.model_parameters)+3, P_in.iterations), (1:size(T_mdl,1))', 'uni', 0);
     for i = 1:P_in.iterations
         i_trodes=ismember(1:n_trodes, randperm(n_trodes, round(n_trodes/2)));
         trodes_used(:,i)=i_trodes;
@@ -101,7 +118,6 @@ function S = sum_exp_trodes_select_mdl(Cells, varargin)
     % collect variables into the table T_MDL
     % in each iteration, get the rank of that model from the lowest to
     % highest LL
-    
     Err=real(Err);
     err_norm = (Err - min(Err))./(max(Err)-min(Err));
     T_res = T_mdl;
@@ -115,7 +131,7 @@ function S = sum_exp_trodes_select_mdl(Cells, varargin)
     end
     T_res.frac_best = sum(T_res.rank==1,2)/P_in.iterations;
     T_res.avg_rank = mean(T_res.rank,2);
-    T_res.n_regressors = sum(T_res{:,P.sum_exp_trodes.regressors},2);
+    T_res.n_regressors = sum(T_res{:,P_in.model_parameters},2);
     
     % sort rows
     sort_col = find(strcmp(T_res.Properties.VariableNames,'err_norm'));
@@ -124,7 +140,7 @@ function S = sum_exp_trodes_select_mdl(Cells, varargin)
     
     % collect variables into the output structure S
     S.T_trode = T_trode;
-    S.exp_factors=exp_factors;
+    S.T_regressor = T_regressor;
     S.trodes_used = trodes_used;
     S.T_res = T_res;
     S.T_mdl = T_mdl;
