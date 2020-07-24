@@ -29,13 +29,12 @@ function [] = sum_exp_trodes_plot_coef(S, varargin)
     n_col = 4;
     n_row = 2;
     label_offset = 12;
-    
     %%
     k = k + 1;
     ax_hdl=subplot(n_row,n_col, k);
     plot_multiple(ax_hdl, S, 'N1', 'mdl_inds', P_in.mdl_inds, ...
                                    'rescale_parameters', P_in.rescale_parameters);
-    ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*0.82;
+    ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*1.1;%*0.82;
     ax_hdl.OuterPosition(4) = ax_hdl.OuterPosition(4)*0.9;
     %%
     k = k + 1;
@@ -57,7 +56,7 @@ function [] = sum_exp_trodes_plot_coef(S, varargin)
     ax_hdl=subplot(n_row,n_col, k);
     plot_multiple(ax_hdl, S, 'k', 'mdl_inds',  P_in.mdl_inds, ...
                                   'rescale_parameters', P_in.rescale_parameters);
-    ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*0.9;
+    ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*1.1;%*0.9;
     %%
     k = k + 1;
     ax_hdl=subplot(n_row,n_col, k);
@@ -192,7 +191,8 @@ function [] = plot_multiple(ax, S, param_type, varargin)
 %             ylim([-0.5, 1.5])
         case 'k'
             title('Coefficients in the change rate ($k$)', 'fontweight', 'normal', 'interpreter', 'latex')
-%             ylim([-0.025, 0.015])
+            ylim([-0.05, 0.1])
+            yticks(-0.05:0.05:0.1)
             ytl = arrayfun(@num2str, yticks, 'uni', 0);
             yticklabels(ytl)
         case 'k0'

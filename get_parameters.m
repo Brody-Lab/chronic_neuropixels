@@ -24,12 +24,13 @@ P.longevity_folder_path = [P.repository_path filesep 'longevity'];
 P.Thomass_recordings_path = [P.longevity_folder_path filesep 'Thomass_recordings.csv'];
 P.Adrians_recordings_path = [P.longevity_folder_path filesep 'recordings_log.csv'];
 P.implant_log_path = [P.longevity_folder_path filesep 'implant_log.csv'];
+P.implants_path = [P.longevity_folder_path filesep 'implants.csv'];
 P.choice_sel_data_path = 'X:\RATTER\PhysData\NP_sorted\Thomas';
 P.choice_sel_file_names = {'T212_2019_08_14'; ...
                            'T224_2019_11_18'; ...
                            'T249_2020_02_12'};
 P.delivery_date_path = [P.longevity_folder_path filesep 'delivery_date.csv'];
-%% paths to folders to be ignored by git
+P.age_at_implant_path=[P.longevity_folder_path filesep 'age_at_implant.csv'];
 P.plots_folder_path = [P.repository_path filesep 'plots'];
 if ~isfolder(P.plots_folder_path)
     mkdir(P.plots_folder_path);
@@ -42,6 +43,25 @@ P.choice_sel_mat_path = [P.data_folder_path filesep 'choice_modulation.mat'];
 P.Cells_path = [P.data_folder_path filesep 'Cells.mat'];
 P.exp_decay_data_path = [P.data_folder_path filesep 'exp_decay_data.mat'];
 P.sum_exp_data_path = [P.data_folder_path filesep 'sum_exp_data.mat'];
+%% rats
+P.rats = [  "A230"
+            "A241"
+            "A242"
+            "A243"
+            "A249"
+            "K265"
+            "T176"
+            "T179"
+            "T181"
+            "T182"
+            "T196"
+            "T209"
+            "T212"
+            "T219"
+            "T223"
+            "T224"
+            "T227"
+            "T249"];
 %% analyses
 P.noise_threshold_uV = 20;
 P.gain_noise_example.implanted = 'gain_noise_17131311352_2019_10_09';
@@ -113,6 +133,21 @@ P.DV_bin_edges = [-10, -2,   0];
 P.EI_bin_edges = [1, 193, 385, 577, 769];
 P.ML_bin_edges = [0 1 4];
 P.brain_area_groups = {{'PrL', 'MO'}, {'other'}};
+P.brain_areas = [  "dmFC",...
+                "vmFC",...
+                "MCtx", ...
+                "dmStr",...
+                "vmStr",...
+                "piriform",...
+                "S1",...
+                "lStr",...
+                "pallidum",...
+                "amygdala",...
+                "striatum tail", ...
+                "dpCtx",...
+                "postsubiculum", ...
+                "SC",...
+                "nIC"];
 %% Sum of exponentials model for electrodes
 
 % P.sum_exp_trodes.exp_factors = {'AP', 'DV', 'DV_gtn2', 'ML', 'SP', 'SO'};
@@ -243,3 +278,5 @@ P.text.N1 = 'N_1';
 %%
 P.response_to_major_comment_3_mdl_data_path=[P.data_folder_path filesep ...
     'response_to_major_comment_3_mdl_data.mat'];
+P.response_to_major_comment_3_submdl_data_path=[P.data_folder_path filesep ...
+    'response_to_major_comment_3_submdl_data.mat'];
