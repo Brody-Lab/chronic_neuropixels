@@ -40,7 +40,6 @@ function[]=plot_longevity_by_brain_area(Cells, brain_area, varargin)
 P = get_parameters;
 parseobj = inputParser;
 addParameter(parseobj, 'axes', [], @(x) isempty(x) || isa(x,  'matlab.graphics.axis.Axes'));
-addParameter(parseobj, 'T_implants', [], @(x) istable(x));
 addParameter(parseobj, 'metric', 'unit', ...
     @(x) validateattributes(x, {'string', 'cell', 'char'}, {}))
 addParameter(parseobj, 'normalize_by_electrodes', false, @(x) islogical(x)&&isscalar(x))
@@ -53,21 +52,21 @@ parse(parseobj, varargin{:});
 P_in = parseobj.Results;
 brain_area = string(brain_area);
 assert(ismember(brain_area, P.brain_areas));
-T = get_metrics_from_Cells(Cells, 'condition_on', 'brain_area', ...
-                                  'brain_area', {brain_area, {'other'}}, ...
-                                  'standardize_area_names', true);
-T = T(T.brain_area==brain_area,:);
+T_sess = get_metrics_from_Cells(Cells, 'condition_on', 'brain_area', ...
+                                      'brain_area', {brain_area, {'other'}}, ...
+                                      'standardize_area_names', true);
+T_sess = T_sess(T_sess.brain_area==brain_area,:);
 %% normalize by electrodes
 y_label = P.text.(P_in.metric);
-if numel(unique(T.condition)) > 1 && ~P_in.normalize_by_electrodes
+if numel(unique(T_sess.condition)) > 1 && ~P_in.normalize_by_electrodes
     P_in.normalize_by_electrodes=true;
     warning('Because of conditioning, normalize_by_electrodes is set to be true')
 end
 if P_in.normalize_by_electrodes && ~strcmp(P_in.metric, 'Vpp')
-    metric=T.(P_in.metric)./T.n_elec;
+    metric=T_sess.(P_in.metric)./T_sess.n_elec;
     y_label = [y_label '/electrode'];
 else
-    metric=T.(P_in.metric);
+    metric=T_sess.(P_in.metric);
 end
 if P_in.metric == "event_rate"
     y_label = [y_label, ' (Hz)'];
@@ -84,24 +83,20 @@ set(gca, 'XLim', [min(P_in.time_bin_edges), max(P_in.time_bin_edges)], ...
          'YLim', [0,1.5], ...
          'YTick', 0:0.5:1.5)
 %%
-[G, ID]=findgroups(T(:,{'rat', 'probe_serial'}));
-for i = 1:max(G)
-    idx = G == i;
-    x = groupsummary(T.days_elapsed(idx), T.days_elapsed(idx), ...
+T_implants = readtable(P.implants_by_area_path);
+T_implants = T_implants(T_implants.brain_area == brain_area,:);
+for i = 1:size(T_implants,1)
+    idx = strcmp(T_sess.rat, T_implants.rat(i)) & ...
+          T_sess.probe_serial == T_implants.probe_serial(i);
+    x = groupsummary(T_sess.days_elapsed(idx), T_sess.days_elapsed(idx), ...
                      P_in.time_bin_edges, 'mean');
-    y = groupsummary(metric(idx), T.days_elapsed(idx), ...
+    y = groupsummary(metric(idx), T_sess.days_elapsed(idx), ...
                      P_in.time_bin_edges, 'mean');    
-    [marker, colr] = lookup_linespec_of_implant(Cells, ID.rat(i), ID.probe_serial(i), ...
-                                                P_in.T_implants);
+    [marker, colr] = lookup_linespec_of_implant(T_implants.rat(i), T_implants.probe_serial(i));
     hdl(i) = plot(x,y, marker, 'Color', colr, 'linewidth', 1.5, 'markersize', 10);
-    
-    if ~isempty(P_in.T_implants)
-        i_implant(i) = unique(P_in.T_implants.implant(P_in.T_implants.rat==ID.rat(i) & ...
-                                               P_in.T_implants.probe_serial==ID.probe_serial(i)));
-    end
 end
 if P_in.legend_on
-    legend(hdl, num2str(i_implant'), 'location', 'best')
+    legend(hdl, num2str(T_implants.implant_number), 'location', 'best')
 end
 ylim([0,1].*ylim)
 xlabel('Days since implant')

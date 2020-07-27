@@ -25,6 +25,7 @@ P.Thomass_recordings_path = [P.longevity_folder_path filesep 'Thomass_recordings
 P.Adrians_recordings_path = [P.longevity_folder_path filesep 'recordings_log.csv'];
 P.implant_log_path = [P.longevity_folder_path filesep 'implant_log.csv'];
 P.implants_path = [P.longevity_folder_path filesep 'implants.csv'];
+P.implants_by_area_path = [P.longevity_folder_path filesep 'implants_by_area.csv'];
 P.choice_sel_data_path = 'X:\RATTER\PhysData\NP_sorted\Thomas';
 P.choice_sel_file_names = {'T212_2019_08_14'; ...
                            'T224_2019_11_18'; ...

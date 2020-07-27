@@ -12,4 +12,4 @@ else
     end
 end
 
-sum_exp_trodes_plot_coef(S, 'mdl_inds', 1:5)
+sum_exp_trodes_plot_coef(S, 'mdl_inds', 1:5, 'rescale_parameters', false)

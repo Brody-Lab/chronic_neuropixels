@@ -32,7 +32,7 @@ label_offset = 0;
 fit_type = 'exponential';
 ax_hdl={};
 %% Plot individual recordings
-for region = {'mFC', 'MCtx', 'AVS'}
+for region = {'vmFC', 'MCtx', 'vmStr'}
     k = k + 1;
     ax_hdl{k} = subplot(n_row, n_col,k);
     plot_indiv_recordings(Cells, region{:}, ...
@@ -41,6 +41,10 @@ for region = {'mFC', 'MCtx', 'AVS'}
                           'ylabel_on', mod(k, n_col)==1);
     ax_hdl{k}.OuterPosition(2) = ax_hdl{k}.OuterPosition(2) + 0.03; % shift the plots above
     label_panel(ax_hdl{k}, P.panel_labels(k), 'FontSize', P.panel_label_font_size);
+    if k == 1
+        ylabel('Single unit/electrode')
+    end
+    set(gca, 'YLim', [0 1.5], 'YTick', 0:0.5:1.5)
 end
 %% Plot average across all conditions
 T = get_metrics_from_Cells(Cells, 'exclude_3A', exclude_3A);
@@ -56,13 +60,20 @@ for metric = {'unit', 'single_unit'}
     plot_average_stability(T, 'metric', metric{:}, ...
                               'axes', gca, ...
                               'print_sample_size', mod(k,n_col)==1, ...
+                              'normalize_by_electrodes', true, ...
                               'normalize_initial_value', false, ...
                               'fit_type', fit_type);
     label_panel(gca, P.panel_labels(k+label_offset), 'FontSize', P.panel_label_font_size);
-    title(P.text.(metric{:}))
+    title(P.text.(metric{:}), 'fontweight', 'normal')
     % report the pval based on the t-statistic
     pval = stat_test_stability(T, 'metric', metric{:}, 'day_range', [8, inf]);
     fprintf('\n    %s: p=%0.3f', metric{:}, pval);
+    
+    if metric == "single_unit"
+        ylim([0,1]);
+    else
+        ylim([0, 2.1])
+    end
 end
 fprintf('\n')
 %% Skip a plot for the anatomical schematics
@@ -89,6 +100,11 @@ for metric = {'unit', 'single_unit'}
     fprintf('\nANOVA with factors 1)bank and 2)DV on the change in %s:', metric{:});
     fprintf('\n    bank: p = %0.3f', Pval.(metric{:})(1));
     fprintf('\n    DV: p = %0.3f', Pval.(metric{:})(2));
+    if metric == "single_unit"
+        ylim([0,1]);
+    else
+        ylim([0, 2.1])
+    end
 end
 %% Plot model half life - DV
 k = k + 1;
@@ -125,6 +141,12 @@ for metric = {'unit', 'single_unit'}
                                   'FaceAlpha', 0.3, ...
                                   'axes', gca);
     label_panel(gca, P.panel_labels(k+label_offset), 'FontSize', P.panel_label_font_size);
+    
+    if metric == "single_unit"
+        ylim([0,1]);
+    else
+        ylim([0, 2.1])
+    end
 end
 %% Plot model half life - AP
 k = k + 1;
@@ -144,7 +166,7 @@ plot_tau_mdl(T_ed, 'condition', 'AP', ...
 ax_hdl.OuterPosition(1) = ax_hdl.OuterPosition(1) + 0.03; % shift the plots right
 %% Save
 for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.plots_folder_path filesep 'figure2_v2'], P.figure_image_format{i})
+    saveas(gcf, [P.plots_folder_path filesep 'figure2'], P.figure_image_format{i})
 end
 %% Panels M,N,O,and P
 figure2_regression_mdl

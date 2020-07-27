@@ -1,4 +1,4 @@
-function [marker, colr] = lookup_linespec_of_implant(Cells, rat_name, probe_serial, T)
+function [marker, colr] = lookup_linespec_of_implant(rat_name, probe_serial)
 % LOOKUP_LINESPEC_OF_IMPLANT Each implant is assigned a combination of
 % color and marker spec
 %
@@ -18,20 +18,12 @@ function [marker, colr] = lookup_linespec_of_implant(Cells, rat_name, probe_seri
 %   T
 %       An implants table for specifying the color/marker order
 
-validateattributes(Cells, {'cell'},{})
 assert(ischar(rat_name) || isstring(rat_name) || iscellstr(rat_name), ...
     'RAT_NAME must be a char vector, string, or cell string.')
 validateattributes(probe_serial, {'numeric'},{'scalar'})
-
-if nargin < 4 && ~isempty(T)
-    T = get_metrics_from_Cells(Cells);
-    [~,ID]=findgroups(T(:,{'rat', 'probe_serial'}));
-    ID = flip(ID);
-    i = find(ID.rat==rat_name & ID.probe_serial == probe_serial);
-else
-    i = unique(T.implant(T.rat == rat_name & ...
-                         T.probe_serial==probe_serial));
-end
+P=get_parameters;
+T = readtable(P.implants_path);
+i = find(strcmp(T.rat,rat_name) & T.probe_serial == probe_serial);
 if numel(i)~=1
     error('Cannot find unique implant')
 end
@@ -49,13 +41,8 @@ marker_inds = repmat((1:nmark), 1, ncolr);
 inds = rot90(reshape(1:((ncolr+1)*(nmark)), ncolr+1, nmark));
 inds(inds>ncolr*nmark)=[];
 
-s = rng;
-rng('default')
-ridx=randperm(ncolr*nmark, ncolr*nmark);
-rng(s)
-
-color_inds = color_inds(ridx);
-marker_inds = marker_inds(ridx);
+color_inds = color_inds(inds);
+marker_inds = marker_inds(inds);
 
 i = mod(i-1, ncolr*nmark)+1;
 colr = color_order(color_inds(i),:);

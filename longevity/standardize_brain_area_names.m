@@ -150,6 +150,8 @@ for i = 1:numel(Cells)
         case 'A249'
             Cells{i}.region_names(Cells{i}.DV >  -5.3) = "dmStr";
             Cells{i}.region_names(Cells{i}.DV <= -5.3) = "vmStr";
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV >  -5.3) = "dmStr";
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -5.3) = "vmStr";
         otherwise
             error('Unknown rat')
     end

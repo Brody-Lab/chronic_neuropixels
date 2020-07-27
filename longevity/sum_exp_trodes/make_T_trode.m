@@ -58,6 +58,7 @@ function [T_trode, T_regressor] = make_T_trode(Cells, varargin)
     if ismember('use', T_regressor.name) % the number of times the probe was previously used
         T_gain_noise = readtable(P.gain_noise_log_path);
     end
+    Cells = standardize_brain_area_names(Cells);
     T_trode = struct;
     k = 0;
     for i =1:numel(Cells)
@@ -112,10 +113,12 @@ function [T_trode, T_regressor] = make_T_trode(Cells, varargin)
         T_trode.bank{k,1} = Cells{i}.electrodes.bank;
         T_trode.Cells_index{k,1} = repmat(i, n_trode, 1);
         T_trode.identifier{k,1} = repmat(string(Cells{i}.identifier), n_trode,1);
+        T_trode.brain_area{k,1} = Cells{i}.electrodes.brain_area;
     end
     T_trode = structfun(@(x) vertcat(x{:}), T_trode, 'uni', 0);
     T_trode.rat = categorical(T_trode.rat);
     T_trode.identifier = categorical(T_trode.identifier);
+    T_trode.brain_area = categorical(T_trode.brain_area);
     T_trode.days_since_init = T_trode.days_elapsed - P_in.x0;
     T_trode = struct2table(T_trode);
 
