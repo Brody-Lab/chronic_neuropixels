@@ -25,13 +25,13 @@ P = get_parameters;
 %% import adrian's cells files and run any code which is specific to these files
  % convert to matlab table, will need to be redownloaded if google sheet changes!
 recordings_table = read_recordings_log(P.Adrians_recordings_path);
-use = find(~ismissing(recordings_table.(cells_file_field)) & recordings_table.used_in_chronic_npx_ms==1); % find recordings with a cells file path specified and load those files
+if mode=="uncurated_matching_curated"
+    use = find(~ismissing(recordings_table.curated_cells_file) & recordings_table.used_in_chronic_npx_ms==1); % find recordings with a cells file path specified and load those files
+else
+    use = find(~ismissing(recordings_table.(cells_file_field)) & recordings_table.used_in_chronic_npx_ms==1); % find recordings with a cells file path specified and load those files    
+end
 for i=1:length(use)
-    if mode=="uncurated_matching_curated"
-        tmp = load(recordings_table.cells_file(use(i)));        
-    else
-        tmp = load(recordings_table.(cells_file_field)(use(i)));
-    end
+    tmp = load(recordings_table.(cells_file_field)(use(i)));
     fields = fieldnames(tmp);
     for f=1:length(fields)
         Cells_AGB(i).(fields{f}) = tmp.(fields{f});
@@ -81,7 +81,7 @@ else
     Cells=num2cell(Cells_AGB);
 end
 %% trim unnecessary fields
-trim_fields = {'raw_spike_time_s','meanWfGlobalRaw','waveformSim'};
+trim_fields = {'raw_spike_time_s','meanWfGlobalRaw','waveformSim','Trials','spike_time_s'};
 for i=1:length(Cells)
     for f=1:length(trim_fields)
         if isfield(Cells{i},trim_fields{f})
