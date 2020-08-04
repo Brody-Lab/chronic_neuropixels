@@ -1,3 +1,4 @@
+function Cells = postprocess_Cells(Cells)
 % POSTPROCESS_CELLS A script for calculating various metrics for Cells
 % after collecting the Cells files
 %% A230's AP coordnate got messed up

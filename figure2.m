@@ -9,8 +9,8 @@ P=get_parameters;
 if from_scratch
     % note: regnerating these data files from scratch requires raw files and
     % data wrangling code not in the chronic_neuropixels repository.    
-    collect_cells_files
-    postprocess_Cells
+    Cells=collect_cells_files();
+    Cells=postprocess_Cells(Cells);
     assemble_exp_decay_data(Cells)
 else
     if ~exist('Cells', 'var')

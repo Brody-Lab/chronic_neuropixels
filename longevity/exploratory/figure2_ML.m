@@ -1,8 +1,8 @@
 from_scratch = false; % Do you want to reassemble the data files from scratch?
 P=get_parameters;
 if from_scratch
-    collect_cell_files
-    postprocess_Cells
+    Cells=collect_cells_files();
+    Cells=postprocess_Cells(Cells);
 else
     if ~exist('Cells', 'var')
         fprintf('Loading the variabe CELLS...')

@@ -24,8 +24,8 @@ if P_input.from_scratch
     % note: regnerating these data files from scratch requires raw files and
     % data wrangling code not in the chronic_neuropixels repository.
     get_gain_noise_data
-    collect_cells_files
-    postprocess_Cells    
+    Cells=collect_cells_files();
+    Cells=postprocess_Cells(Cells);  
     add_cumulative_days_implanted
     compute_choice_selectivity    
 else
