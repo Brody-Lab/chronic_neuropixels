@@ -45,6 +45,11 @@ for i=1:length(use)
     valid_region = Cells_AGB(i).regions>0;
     Cells_AGB(i).region_names(valid_region) = regions(Cells_AGB(i).regions(valid_region));    
     fprintf('.');    
+    if length(Cells_AGB(i).ks_good)<length(Cells_AGB(i).DV)
+        for k=1:length(Cells_AGB(i).DV)
+            Cells_AGB(i).ks_good(k) = is_ks_good(Cells_AGB(i).raw_spike_time_s{k}); % for each unit, calculate whether it's a good SU based on Kilosort's metric for refractoriness
+        end   
+    end
 end
 if mode=="uncurated"
     %% import thomas' cells file and run any code which is specific to these files
@@ -79,17 +84,5 @@ if mode=="uncurated"
     Cells = [num2cell(Cells_AGB) num2cell(Cells_TZL)];
 else
     Cells=num2cell(Cells_AGB);
-end
-%% trim unnecessary fields
-trim_fields = {'raw_spike_time_s','meanWfGlobalRaw','waveformSim','Trials','spike_time_s'};
-for i=1:length(Cells)
-    for f=1:length(trim_fields)
-        if isfield(Cells{i},trim_fields{f})
-            Cells{i} = rmfield(Cells{i},trim_fields{f});
-        end
-        if isfield(Cells{i},'waveform') && isfield(Cells{i}.waveform,trim_fields{f})
-            Cells{i}.waveform = rmfield(Cells{i}.waveform,trim_fields{f});            
-        end
-    end
 end
             

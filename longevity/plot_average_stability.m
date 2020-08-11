@@ -113,7 +113,7 @@ for i = 1:numel(unique(T.condition))
         y0 = mean(metric(T.condition==i & T.days_elapsed == P_in.x0));
         bootstat = bootstat/y0;
     end
-    hdl(i)=shadedErrorBar(P.longevity_time_bin_centers, bootstat,{@nanmean,@nanstd});
+    hdl(i)=shadedErrorBar(P.longevity_time_bin_centers(1:max(T.days_bin)), bootstat,{@nanmean,@nanstd});
     hold on;
     hdl(i).mainLine.LineWidth=1;
     hdl(i).mainLine.LineStyle = '-';

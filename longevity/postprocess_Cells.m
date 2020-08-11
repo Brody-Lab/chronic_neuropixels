@@ -1,4 +1,5 @@
 function Cells = postprocess_Cells(Cells)
+P=get_parameters;
 % POSTPROCESS_CELLS A script for calculating various metrics for Cells
 % after collecting the Cells files
 %% A230's AP coordnate got messed up
@@ -107,7 +108,7 @@ for c = {'AP', 'ML', 'DV'}
     coord=c{:};
     if min(Cells{i}.electrodes.(coord)) - min(Cells{i}.(coord))>eps || ...
        max(Cells{i}.(coord)) - max(Cells{i}.electrodes.(coord)) >0.001
-            error('mismatch')
+            warning('mismatch')
     end
 end
 end
@@ -136,3 +137,15 @@ for i = 1:numel(Cells)
     end
 end
 %% Standardize names of brain areas
+%% trim unnecessary fields
+trim_fields = {'raw_spike_time_s','meanWfGlobalRaw','waveformSim','Trials','spike_time_s'};
+for i=1:length(Cells)
+    for f=1:length(trim_fields)
+        if isfield(Cells{i},trim_fields{f})
+            Cells{i} = rmfield(Cells{i},trim_fields{f});
+        end
+        if isfield(Cells{i},'waveform') && isfield(Cells{i}.waveform,trim_fields{f})
+            Cells{i}.waveform = rmfield(Cells{i}.waveform,trim_fields{f});            
+        end
+    end
+end
