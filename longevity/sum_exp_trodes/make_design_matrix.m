@@ -20,8 +20,9 @@
 %       A char vector, string array, or cell array of char specifying the
 %       model parameters. Each parameter must be a member of
 %       P.possible_model_parameters. The parameters in the N1 term should
-%       start with "N1_" and those in the change rate term should stat with
-%       "k_". 
+%       start with "N1_", those in the change rate term should start with
+%       "k_", and those in the fraction of rapidly disppearing fraction
+%       should start with "a_".
 function T_dsgn = make_design_matrix(T_trode, varargin)
 P = get_parameters;
 parseobj = inputParser;
@@ -33,7 +34,6 @@ for i = 1:numel(P_in.model_parameters)
     if contains(P_in.model_parameters{i}, 'const')
         T_dsgn.(P_in.model_parameters{i}) = ones(size(T_trode,1),1);
     else
-        idx_= regexp(P_in.model_parameters{i}, '_');
         regressor_name = get_regressor_name(P_in.model_parameters{i});
         idx = ismember(T_trode.Properties.VariableNames, regressor_name);
         if sum(idx)~=1

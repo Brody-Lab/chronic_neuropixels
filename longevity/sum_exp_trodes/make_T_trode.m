@@ -150,7 +150,7 @@ function regressor_names = get_regressor_names(model_parameters)
     P = get_parameters;
     for i = 1:numel(P.sum_exp_trodes.possible_regressors)
         r = P.sum_exp_trodes.possible_regressors{i};
-        if any(ismember({['N1_' r], ['k_' r]}, model_parameters))
+        if any(ismember({['N1_' r], ['k_' r], ['N1f_' r], ['N1s_' r]}, model_parameters))
             regressor_names = [regressor_names, string(r)];
         end
     end

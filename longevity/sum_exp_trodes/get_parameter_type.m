@@ -10,7 +10,11 @@
 %   parameter_type
 %       A char vector
 function parameter_type = get_parameter_type(parameter_name)
-    if contains(parameter_name, 'N1_') && ~contains(parameter_name, 'k_')
+    if contains(parameter_name, 'N1f_')
+        parameter_type = 'N1f';
+    elseif contains(parameter_name, 'N1s_')
+        parameter_type = 'N1s';
+    elseif contains(parameter_name, 'N1_')
         parameter_type = 'N1';
     elseif contains(parameter_name, 'k_') && ~contains(parameter_name, 'N1_')
         parameter_type = 'k';

@@ -10,7 +10,11 @@
 %   regressor_name
 %       A char vector
 function regressor_name = get_regressor_name(parameter_name)
-    if get_parameter_type(parameter_name)=="N1"
+    if get_parameter_type(parameter_name)=="N1f"
+        regressor_name = parameter_name(5:end);
+    elseif get_parameter_type(parameter_name)=="N1s"
+        regressor_name = parameter_name(5:end);
+    elseif get_parameter_type(parameter_name)=="N1"
         regressor_name = parameter_name(4:end);
     elseif get_parameter_type(parameter_name)=="k"
         regressor_name = parameter_name(3:end);
