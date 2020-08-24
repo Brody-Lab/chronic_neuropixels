@@ -1,4 +1,4 @@
-function X = make_design_matrix_for_each_term(T_dsgn, T_mdl, varargin)
+,function X = make_design_matrix_for_each_term(T_dsgn, T_mdl, varargin)
 % MAKE_DESIGN_MATRIX_FOR_EACH_TERM separate the design matrix for each term
 %
 %=INPUT
@@ -37,9 +37,9 @@ for i = 1:numel(parameter_names)
     parameter_type = get_parameter_type(parameter_names{i});
     regressor_name = get_regressor_name(parameter_names{i});
     if isfield(X, parameter_type)
-        X.(parameter_type) = [X.(parameter_type), T_dsgn.(regressor_name)(P_in.i_trodes,:)];
+        X.(parameter_type) = [X.(parameter_type), T_dsgn.(parameter_names{i})(P_in.i_trodes,:)];
     else
-        X.(parameter_type) = T_dsgn.(regressor_name)(P_in.i_trodes,:);
+        X.(parameter_type) = T_dsgn.(parameter_names{i})(P_in.i_trodes,:);
     end
 end
 for param_type = {'N1', 'N1f', 'N1s', 'k'}

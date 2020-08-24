@@ -23,5 +23,8 @@ function nLL = calc_nLL_poisson(b, XN1f, XN1s, Xk, t, y)
 %       negative log-likelihood
 
     yhat = calc_resp_var(b, XN1f, XN1s, Xk, t);
-    nLL = sum(yhat) - sum(y.*log(yhat)); % ignoring the term independent of lambda
+%     if any(yhat<0)
+%         error('negative yhat?')
+%     end
+    nLL = sum(yhat) - y'*log(yhat); % ignoring the term independent of lambda
 end

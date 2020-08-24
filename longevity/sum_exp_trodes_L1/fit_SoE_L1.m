@@ -1,4 +1,4 @@
-% FIT_SUM_EXP_TRODES_L1 Fit the sum-of-exponentials model fit to the unit
+% fit_SOE_L1 Fit the sum-of-exponentials model fit to the unit
 % count of each electrode in each recording session, using a L1
 % regularization.
 %
@@ -25,6 +25,9 @@
 %       
 %=OPTIONAL INPUT, NAME-VALUE PAIRS
 %
+%   generate_data
+%       Make fake response data using the observed predictors
+%
 %   KFold
 %       Number of cross-validation folds
 %
@@ -41,28 +44,29 @@
 %       the set of model parameters. Each parameter must be a member of
 %       P.possible_model_parameters
 %
-%   num_phi
-%       Number of phi values for each term (default: 25).
+%   num_lambda
+%       Number of lambda values for each term (default: 25).
 %
-%   phi_ratio
-%       Ratio of smallest to largest phi values (default: 1e-4). Phi is the
+%   lambda_ratio
+%       Ratio of smallest to largest lambda values (default: 1e-4). Lambda is the
 %       penalization paramter
 %
 %   shuffle
 %       A logical scalar specifying whether to shuffle the rows for each
 %       variable independently.
 %       
-function S = fit_sum_exp_trodes_L1(Cells, varargin)
+function S = fit_SoE_L1(Cells, varargin)
     P = get_parameters;
     parseobj = inputParser;
     addParameter(parseobj, 'KFold', 2, ...
         @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer', 'nonzero'}))
+    addParameter(parseobj, 'generate_data', false, @(x) x==0 || x==1)
     addParameter(parseobj, 'metric', 'unit', @(x) all(ismember(x, P.longevity_metrics)))
     addParameter(parseobj, 'model_parameters', P.sum_exp_trodes.model_parameters_L1, ...
         @(x) all(ismember(x, P.sum_exp_trodes.model_parameters_L1)))
-    addParameter(parseobj, 'noise', 'poisson', @(x) any(strcmpi(x, {'poisson', 'gaussian'})))
-    addParameter(parseobj, 'num_phi', 12, @(x) validateattributes(x, {'numeric'}, {'scalar', 'positive', 'integer'}))
-    addParameter(parseobj, 'phi_ratio', 1e-4, @(x) validateattributes(x, {'numeric'}, {'scalar', 'positive'}))
+    addParameter(parseobj, 'noise', 'poisson', @(x) any(strcmp(x, {'poisson', 'gaussian'})))
+    addParameter(parseobj, 'num_lambda', 12, @(x) validateattributes(x, {'numeric'}, {'scalar', 'positive', 'integer'}))
+    addParameter(parseobj, 'lambda_ratio', 1e-2, @(x) validateattributes(x, {'numeric'}, {'scalar', 'positive'}))
     addParameter(parseobj, 'shuffle', false, @(x) x==0 || x==1)
     parse(parseobj, varargin{:});
     P_in = parseobj.Results;
@@ -77,123 +81,128 @@ function S = fit_sum_exp_trodes_L1(Cells, varargin)
             T_trode.(T_regressor.name{i}) = T_trode.(T_regressor.name{i})(randperm(n));
         end
     end
+    
     T_dsgn = make_design_matrix(T_trode, 'model_parameters', P_in.model_parameters);
     T_mdl = cell2table(num2cell(true(1,numel(P_in.model_parameters))));
     T_mdl.Properties.VariableNames = P_in.model_parameters;
     X = make_design_matrix_for_each_term(T_dsgn, T_mdl);
     S.X = X;
     
+    if P_in.generate_data
+        [ygen, bgen] = generate_response_var(X,  T_trode.days_since_init);
+        T_trode.(P_in.metric) = ygen;
+        S.bgen = bgen;
+    end
+    
     switch P_in.noise
         case 'gaussian'
             calc_nLL = @calc_nLL_gaussian;
         case 'poisson'
             calc_nLL = @calc_nLL_poisson;
-        otherwise
-            error('unrecognized noise distribiution');
     end
     
     opts=optimoptions('fmincon');
-    opts.Display = 'off';
+    opts.Display = 'notify';
+    opts.MaxFunctionEvaluations = 1e5;
     % Initial valuess
     n_N1f = size(X.N1f,2);
     n_N1s = size(X.N1s,2);
     n_k   = size(X.k,2);
     b0 = [-1; -0.01; ones(n_N1f,1); ones(n_N1s,1); -0.01*ones(n_k,1)]; 
        % [k_fast, k_slow, ...]
-    [lb, ub] = get_bounds(X);
+%     [lb, ub] = get_bounds(X);
     [A,b] = get_linear_inequality_constraints(X);
           
-    % randomly select half of the data for estimating phi
+    % randomly select half of the data for estimating lambda
     n_trodes = size(X.N1f,1);
-    i_est_phi = ismember(1:n_trodes, randperm(n_trodes, round(n_trodes/2)));
-    S.i_est_phi = i_est_phi;
-    XN1f = X.N1f(i_est_phi,:);
-    XN1s = X.N1s(i_est_phi,:);
-    Xk = X.k(i_est_phi,:); 
-    t = T_trode.days_since_init(i_est_phi);
-    y = T_trode.(P_in.metric)(i_est_phi);
+    i_est_lambda = ismember(1:n_trodes, randperm(n_trodes, round(n_trodes/2)));
+    S.i_est_lambda = i_est_lambda;
+    XN1f = X.N1f(i_est_lambda,:);
+    XN1s = X.N1s(i_est_lambda,:);
+    Xk = X.k(i_est_lambda,:); 
+    t = T_trode.days_since_init(i_est_lambda);
+    y = T_trode.(P_in.metric)(i_est_lambda);
     
     %fit without penalization
+    tic
     betas = fmincon(@(betas) calc_nLL(betas, XN1f, XN1s, Xk, t, y), b0, A, b, ...
-                                      [], [], lb, ub, [], ...
+                                      [], [], [], [], [], ...
                                       opts);
-    B0.kf  = betas(1);
-    B0.ks  = betas(2);
-    B0.N1f = betas(3:n_N1f+2);
-    B0.N1s = betas(n_N1f+3:n_N1f+n_N1s+2);
-    B0.k   = betas(n_N1f+n_N1s+3:end);
+    toc
+    
+    B0.kf   = betas(1);
+    B0.ks   = betas(2);
+    B0.N1f0 = betas(3);
+    B0.N1f  = betas(4:n_N1f+2);
+    B0.N1s0 = betas(n_N1f+3);
+    B0.N1s  = betas(n_N1f+4:n_N1f+n_N1s+2);
+    B0.k    = betas(n_N1f+n_N1s+3:end);
+    assert(numel(cell2mat(struct2cell(B0))) == numel(b0));
     S.B0 = B0;
     
     % scaling parameter
     s = mean(abs([B0.N1f; B0.N1s]))/mean(abs(B0.k));
-    beta_scale = [0; 0; ...
-                  ones(n_N1f,1); ...
-                  ones(n_N1s,1); ...
+    beta_scale = [0; 0; 0; 
+                  ones(n_N1f-1,1); ...
+                  0;
+                  ones(n_N1s-1,1); ...
                   s*ones(n_k,1)];
     S.beta_scale = beta_scale;
     
-    % Calculate the phi range. Range calculation is not yet principled: The
-    % maximum phi value is exp(1) * sum(abs(B0.(term)));
-    loghi = 0;
-    loglo = log(P_in.phi_ratio);
-    phi = exp(linspace(loghi,loglo,P_in.num_phi)+2);
-    phi = abs(betas')*beta_scale*phi;
-    n_mdl = size(phi,2);
-    
+    nLL0 = calc_nLL(betas, XN1f, XN1s, Xk, t, y);
+    loghi = -4; % this is empirical
+    loglo = loghi+log(P_in.lambda_ratio);
+    lambda = exp(linspace(loghi,loglo,P_in.num_lambda-1))*nLL0/(abs(betas')*beta_scale);
+    lambda = [lambda,0];
+    n_mdl = size(lambda,2);
+     
     % fit with penalization
-    cvp = cvpartition(sum(i_est_phi), 'KFold', P_in.KFold);
-    betas_est_phi = cell(n_mdl,1);
-    nLL_est_phi = cell(n_mdl, 1);
+    cvp = cvpartition(sum(i_est_lambda), 'KFold', P_in.KFold);
+    betas_est_lambda = cell(n_mdl,1);
+    nLL_est_lambda = cell(n_mdl, 1);
     tic
     parfor i = 1:n_mdl
         % cross-validate
         % To faciliate debugging, CROSSVAL is not used
         fprintf('\n%i', i)
-        betas_est_phi{i} = nan(numel(b0), P_in.KFold);
-        nLL_est_phi{i} = nan(1, P_in.KFold);
-        f_c = @(x) abs(x')*beta_scale - phi(i);
-        f_ceq = @(x) [];
-        nonlinfcn = @(x) deal(f_c(x),f_ceq(x));
+        betas_est_lambda{i} = nan(numel(b0), P_in.KFold);
+        nLL_est_lambda{i} = nan(1, P_in.KFold);
         for k = 1:P_in.KFold
             itrain = training(cvp,k);
             itest = test(cvp,k);    
-            btrain = fmincon(@(betas) calc_nLL(betas, XN1f(itrain,:), XN1s(itrain,:), Xk(itrain,:), t(itrain), y(itrain)), ...
-                             b0, [], [], [], [], [], [], ...
-                             nonlinfcn, ...
-                             opts);
-            betas_est_phi{i}(:,k) = btrain;
-            nLL_est_phi{i}(k) = calc_nLL(btrain, XN1f(itest,:), XN1s(itest,:), Xk(itest,:), t(itest), y(itest));
+            fun = @(betas) calc_nLL(betas, XN1f(itrain,:), XN1s(itrain,:), Xk(itrain,:), t(itrain), y(itrain)) + ...
+                           lambda(i)*abs(betas)'*beta_scale;
+            btrain = fmincon(fun, b0, A, b, [], [], [], [], [], opts);
+            betas_est_lambda{i}(:,k) = btrain;
+            nLL_est_lambda{i}(k) = calc_nLL(btrain, XN1f(itest,:), XN1s(itest,:), Xk(itest,:), t(itest), y(itest));
         end
     end
     toc
-    S.betas_est_phi = betas_est_phi;
-    S.nLL_est_phi = nLL_est_phi;
+    S.betas_est_lambda = betas_est_lambda;
+    S.nLL_est_lambda = nLL_est_lambda;
     
-    % assemble a table including all the information for estimating phi
-    T_phi.phi = phi(:);
-    T_phi.LL_per_trode = cellfun(@(x) -1 * mean(x)/sum(i_est_phi), nLL_est_phi);
+    % assemble a table including all the information for estimating lambda
+    T_lambda.lambda = lambda(:);
+    T_lambda.LL_per_trode = cellfun(@(x) -1 * mean(x)/sum(i_est_lambda), nLL_est_lambda);
     for i = 1:n_mdl
-        [~,idx] = min(abs(nLL_est_phi{i}-median(nLL_est_phi{i})));
-        T_phi.betas(i,:) = betas_est_phi{i}(:, idx)';
+        [~,idx] = min(abs(nLL_est_lambda{i}-median(nLL_est_lambda{i})));
+        T_lambda.betas(i,:) = betas_est_lambda{i}(:, idx)';
     end
-    T_phi = struct2table(T_phi);
-    S.T_phi = T_phi;
+    T_lambda = struct2table(T_lambda);
+    S.T_lambda = T_lambda;
     
     % estimate the parameter coefficients
-    [~,i_opt_phi] = max(T_phi.LL_per_trode);
-    S.i_opt_phi = i_opt_phi;
-    XN1f = X.N1f(~i_est_phi,:);
-    XN1s = X.N1s(~i_est_phi,:);
-    Xk = X.k(~i_est_phi,:); 
-    t = T_trode.days_since_init(~i_est_phi);
-    y = T_trode.(P_in.metric)(~i_est_phi);
-    f_c = @(x) abs(x')*beta_scale - phi(i_opt_phi);
-    f_ceq = @(x) [];
-    nonlinfcn = @(x) deal(f_c(x),f_ceq(x));    
-    betas = fmincon(@(betas) calc_nLL(betas, XN1f, XN1s, Xk, t, y), ...
-                             b0, [], [], [], [], [], [], ...
-                             nonlinfcn, ...
-                             opts);
+    [~,i_opt_lambda] = max(T_lambda.LL_per_trode);
+    S.i_opt_lambda = i_opt_lambda;
+    XN1f = X.N1f(~i_est_lambda,:);
+    XN1s = X.N1s(~i_est_lambda,:);
+    Xk = X.k(~i_est_lambda,:); 
+    t = T_trode.days_since_init(~i_est_lambda);
+    y = T_trode.(P_in.metric)(~i_est_lambda);
+    fun = @(betas) calc_nLL(betas, XN1f, XN1s, Xk, t, y) + ...
+                   lambda(i_opt_lambda)*abs(betas)'*beta_scale;
+    betas = fmincon(fun, b0, A, b, [], [], [], [], [], opts);
+    
     % collect variables into the output structure S
     S.P_in = P_in;
     S.T_trode = T_trode;
@@ -201,25 +210,38 @@ function S = fit_sum_exp_trodes_L1(Cells, varargin)
     S.T_dsgn = T_dsgn;
     S.T_mdl = T_mdl;
     S.betas = betas;
+    
+    S.T_betas = cell2table(num2cell(S.betas'));
+    S.T_betas.Properties.VariableNames = ['kf', 'ks', P_in.model_parameters];
 end
-%% NONLCON
-function [c,ceq] = nonlcon(betas, beta_scale, phi)
-% NONLCON nonlinear constraints
+%% GENERATE_RESPONSE_VAR
 %
-%=INPUT
-%
-%   betas
-%       A vector of model coefficients
-%
-%   beta_scale
-%       A vector indicating the scaling of each beta
-%
-%   phi
-%       A g-element vector indicating the penalization parameter of each
-%       group
-    c = abs(betas')*beta_scale - phi;
-    ceq = [];
-end 
+%     
+function [ygen, bgen] = generate_response_var(X, t)
+
+    n_XN1f = size(X.N1f,2)-1;
+    n_XN1s = size(X.N1s,2)-1;
+    n_Xk = size(X.k,2); 
+
+    B.kf = -rand;
+    B.ks = -rand/100;
+    B.N1f0 = rand;
+    B.N1f = rand(n_XN1f,1);
+    B.N1f(randperm(n_XN1f, floor(n_XN1f/2))) = 0;
+    B.N1s0 = rand;
+    B.N1s = rand(n_XN1s,1);
+    B.N1s(randperm(n_XN1s, floor(n_XN1s/2))) = 0;
+    B.k = -rand(n_Xk,1)/10;
+    B.k(randperm(n_Xk, floor(n_Xk/2))) = 0;
+    
+    bgen = cell2mat(struct2cell(B));
+    lambda = calc_resp_var(bgen, X.N1f, X.N1s, X.k, t);
+    ygen = poissrnd(lambda);
+    ygen = lambda;
+    % add some noise
+%     n = numel(ygen);                    
+%     ygen(randperm(n,floor(n/4))) = poissrnd(mean(lambda), floor(n/4),1);
+end
 %% GET_BOUNDS
 %   Return lower and upper bounds of the parameter coefficients   
 %
