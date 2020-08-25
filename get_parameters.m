@@ -33,17 +33,19 @@ P.choice_sel_file_names = {'T212_2019_08_14'; ...
 P.delivery_date_path = [P.longevity_folder_path filesep 'delivery_date.csv'];
 P.age_at_implant_path=[P.longevity_folder_path filesep 'age_at_implant.csv'];
 P.plots_folder_path = [P.repository_path filesep 'plots'];
-if ~isfolder(P.plots_folder_path)
+if ~isdir(P.plots_folder_path)
     mkdir(P.plots_folder_path);
 end
 P.data_folder_path = [P.repository_path filesep 'data'];
-if ~isfolder(P.data_folder_path)
+if ~isdir(P.data_folder_path)
     mkdir(P.data_folder_path);
 end
 P.choice_sel_mat_path = [P.data_folder_path filesep 'choice_modulation.mat'];
 P.Cells_path = [P.data_folder_path filesep 'Cells.mat'];
 P.exp_decay_data_path = [P.data_folder_path filesep 'exp_decay_data.mat'];
 P.sum_exp_data_path = [P.data_folder_path filesep 'sum_exp_data.mat'];
+P.curation_comparison_data_path = [P.data_folder_path filesep 'curation_comparison_data.mat'];
+    
 %% rats
 P.rats = [  "A230"
             "A241"

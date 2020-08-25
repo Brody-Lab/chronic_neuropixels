@@ -1,4 +1,4 @@
-% FIGURE3 Make figure 3 from the manuscrip written by Luo, Bondy, et al.
+% FIGURE5 Make figure 5 from the manuscrip written by Luo, Bondy, et al.
 %
 % The figure shows that while tethered for Neuropixel recording without a
 % cable commutator, rats perform a cognitively demanding task at a level
@@ -9,7 +9,7 @@
 %   from_scratch
 %       logical scalar indicating whether the data will be fetched from the
 %       Brody Lab SQL repository.
-function[]=figure3(varargin)
+function[]=figure5(varargin)
 P_input = inputParser;
 addParameter(P_input, 'from_scratch', false, @(x) isscalar(x) && islogical(x))
 parse(P_input, varargin{:});
@@ -60,5 +60,5 @@ plot_behavioral_comparison('lapse', 'axes', gca);
 label_hdl(k)=label_panel(gca, P.panel_labels(k+1), 'FontSize', P.panel_label_font_size);
 
 for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.plots_folder_path filesep 'figure3'], P.figure_image_format{i})
+    saveas(gcf, [P.plots_folder_path filesep 'figure5'], P.figure_image_format{i})
 end

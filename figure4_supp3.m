@@ -1,4 +1,4 @@
-% Figure 2--supplement 3 fits a sum of two exponential decays to the unit
+% Figure 4--supplement 3 fits a sum of two exponential decays to the unit
 % counts
 %
 % The model:

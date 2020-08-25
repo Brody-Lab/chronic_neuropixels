@@ -1,7 +1,3 @@
-% FIGURE2 Make figure 2 from the manuscrip written by Luo, Bondy, et al.
-%
-%   The figure show that after an initial loss of units, spiking signals
-%   can be maintained >60 days in anterior, deeper brain regions.
 
 %% Load the cells data
 from_scratch = false; % Do you want to reassemble the data files from scratch?
@@ -80,5 +76,5 @@ for metric = {'event_rate', 'Vpp'}
 end
 %% Save
 for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.plots_folder_path filesep 'figure2_event_rate_Vpp'], P.figure_image_format{i})
+    saveas(gcf, [P.plots_folder_path filesep 'figure4_event_rate_Vpp'], P.figure_image_format{i})
 end
