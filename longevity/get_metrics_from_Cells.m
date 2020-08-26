@@ -243,6 +243,11 @@ for i = 1:numel(Cells)
         T.shank_plane(k,1) = string(Cells{i}.shank_plane);
         T.probe_serial(k,1) = str2double(Cells{i}.probe_serial);
         T.sess_date(k,1) = Cells{i}.sess_date;
+        if isfield(Cells{i},'n_probes_recorded')
+            T.n_probes_recorded(k,1) = Cells{i}.n_probes_recorded;
+        else
+            T.n_probes_recorded(k,1) = 1;
+        end
     end
     end
     end

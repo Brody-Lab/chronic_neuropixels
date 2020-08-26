@@ -44,6 +44,7 @@ for i=1:length(use)
     Cells_AGB(i).region_names=cell(size(Cells_AGB(i).regions));
     valid_region = Cells_AGB(i).regions>0;
     Cells_AGB(i).region_names(valid_region) = regions(Cells_AGB(i).regions(valid_region));    
+    Cells_AGB(i).n_probes_recorded = recordings_table.n_probes_recorded(use(i));
     fprintf('.');    
     if length(Cells_AGB(i).ks_good)<length(Cells_AGB(i).DV)
         for k=1:length(Cells_AGB(i).DV)
