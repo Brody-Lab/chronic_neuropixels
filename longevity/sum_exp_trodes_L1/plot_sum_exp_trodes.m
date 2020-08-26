@@ -27,10 +27,16 @@ function plot_sum_exp_trodes(S, varargin)
     addParameter(parseobj, 'i_mdl', 1, @(x) validateattributes(x, {'numeric'}, {'integer', 'positive'}));
     parse(parseobj, varargin{:});
     P_in = parseobj.Results;
-    X = make_design_matrix_for_each_term(S.T_dsgn, S.T_mdl);
     yobsv = S.T_trode.(S.P_in.metric);
     t = S.T_trode.days_since_init;
-    ypred = calc_resp_var(S.betas, X.N1f, X.N1s, X.k, t);
+    if isfield(S.SX, 'N1f')
+        XN1f = padarray(S.SX.N1f{:,:}, [0,1], 1, 'pre');
+        XN1s = padarray(S.SX.N1s{:,:}, [0,1], 1, 'pre');
+        ypred = calc_resp_var_N1f_N1s(S.betas, XN1f, XN1s, S.SX.k{:,:}, t);
+    else
+        XN1 = padarray(S.SX.N1{:,:}, [0,1], 1, 'pre');
+        ypred = calc_resp_var_N1_a(S.betas, XN1, S.SX.k{:,:}, t);
+    end
     bin_edges = 2.^(-0.5:9.5);
     bin_ctrs = 2.^(0:9);
     

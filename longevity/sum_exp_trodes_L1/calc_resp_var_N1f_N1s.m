@@ -24,13 +24,16 @@ function yhat = calc_resp_var_N1f_N1s(b, XN1f, XN1s, Xk, t)
 %   yhat
 %       predicted response variable
 
-    n_XN1f = size(XN1f,2);
-    n_XN1s = size(XN1s,2);
+    n_XN1f = size(XN1f,2)-1;
+    n_XN1s = size(XN1s,2)-1;
     kf = b(1);
     ks = b(2);
-    bN1f = b(3:n_XN1f+2);
-    bN1s = b(n_XN1f+3:n_XN1f+n_XN1s+2);
-    bk   = b(n_XN1f+n_XN1s+3:end);
+    bN1f = [b(3); b(5:n_XN1f+4)];
+    bN1s = [b(4); b(n_XN1f+5:n_XN1f+n_XN1s+4)];
+    bk   = b(n_XN1f+n_XN1s+5:end);
     
-    yhat = (XN1f*bN1f.*exp(kf*t) + XN1s*bN1s.*exp(ks*t)) .* exp(t.*Xk*bk); 
+    N1f = XN1f*bN1f;
+    N1s = XN1s*bN1s;
+    
+    yhat = (N1f.*exp(kf*t) + N1s.*exp(ks*t)) .* exp(t.*Xk*bk);
 end

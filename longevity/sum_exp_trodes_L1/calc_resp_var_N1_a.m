@@ -24,9 +24,11 @@ function yhat = calc_resp_var_N1_a(b, XN1, Xk, t)
     n_XN1 = size(XN1,2);
     kf = b(1);
     ks = b(2);
-    a = cos(b(3)+1)/2;
+    a = (cos(b(3))+1)/2;
     bN1 = b(4:n_XN1+3);
     bk = b(n_XN1+4:end);
     
-    yhat = (a*XN1*bN1.*exp(kf*t) + (1-a)*XN1*bN1.*exp(ks*t)) .* exp(t.*Xk*bk); 
+    N1 = XN1*bN1;
+    
+    yhat = (a*N1.*exp(kf*t) + (1-a)*N1.*exp(ks*t)) .* exp(t.*Xk*bk); 
 end
