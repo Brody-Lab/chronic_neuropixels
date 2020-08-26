@@ -187,10 +187,10 @@ function [] = plot_multiple(ax, S, param_type, varargin)
         case 'k0'
             title(['Baseline' newline 'change' newline 'rates'], 'fontweight', 'normal', 'interpreter', 'latex')
         case 'N1'
-            title(['Coefficients in the' newline 'initial unit count ($N_{1}$)'], 'fontweight', 'normal', 'interpreter', 'latex')
+            title(['Coefficients in the' newline 'initial unit count term ($N_{1}$)'], 'fontweight', 'normal', 'interpreter', 'latex')
 %             ylim([-0.5, 1.5])
         case 'k'
-            title('Coefficients in the change rate ($k$)', 'fontweight', 'normal', 'interpreter', 'latex')
+            title('Coefficients in the change rate term ($k$)', 'fontweight', 'normal', 'interpreter', 'latex')
             ylim([-0.05, 0.1])
             yticks(-0.05:0.05:0.1)
             ytl = arrayfun(@num2str, yticks, 'uni', 0);
