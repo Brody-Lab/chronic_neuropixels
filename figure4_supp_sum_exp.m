@@ -1,4 +1,4 @@
-% FIGURE2_SUPP_SUM_EXP make the plots for a Figure 2--supplement that
+% FIGURE2_SUPP_SUM_EXP make the plots for a Figure 4--supplement that
 % provides details about the 
 %
 % The model:
@@ -20,7 +20,7 @@
 %
 %   1) re_bootstrap
 %       Recalculate the confidence intervals and probability values. 
-function [] = figure2_supp_sum_exp(varargin)
+function [] = figure4_supp_sum_exp(varargin)
     P = get_parameters;
     if nargin > 0 && varargin{1}
         if exist('Cells', 'var')
@@ -94,6 +94,6 @@ function [] = figure2_supp_sum_exp(varargin)
         end
     end
     for i = 1:numel(P.figure_image_format)
-        saveas(gcf, [P.plots_folder_path filesep 'figure2_supp_sum_exp_BtoE'], P.figure_image_format{i})
+        saveas(gcf, [P.plots_folder_path filesep 'figure4_supp_sum_exp_BtoE'], P.figure_image_format{i})
     end
 end

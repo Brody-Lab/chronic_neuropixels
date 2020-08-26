@@ -1,4 +1,4 @@
-% FIGURE2_SUPP1 Make figure 2--supplement 1 from the manuscrip written by
+% FIGURE2_SUPP1 Make figure 4--supplement 4 from the manuscrip written by
 % Luo, Bondy, et al.
 %
 %   The figure show that no degradation of spiking signals was detected
@@ -42,5 +42,5 @@ for metric = {'unit', 'single_unit', 'event_rate', 'Vpp'}; metric=metric{:};
 end
 %% Save
 for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.plots_folder_path filesep 'figure2_supp1'], P.figure_image_format{i})
+    saveas(gcf, [P.plots_folder_path filesep 'figure4_supp4'], P.figure_image_format{i})
 end

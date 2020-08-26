@@ -1,4 +1,4 @@
-% Make panels M,N,O,P of figure 2
+% Make panels M,N,O,P of figure 4
 
 add_folders_to_path
 
