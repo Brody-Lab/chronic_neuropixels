@@ -7,7 +7,7 @@ set(gca, P.axes_properties{:}, ...
 yoffset = 0.1;
 y = 1;
 
-str = '$Y = Poisson(\lambda)$';
+str = '$N = Poisson(\lambda)$';
 text(0.1,y, str, 'interpreter', 'latex', 'fontsize', P.font_size)
 
 str = '$\lambda=Ae^{k_{fast}(t-1)}+Be^{k_{slow}(t-1)}$';

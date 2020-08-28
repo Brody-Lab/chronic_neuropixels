@@ -34,7 +34,7 @@ function [] = sum_exp_trodes_plot_coef(S, varargin)
     ax_hdl=subplot(n_row,n_col, k);
     plot_multiple(ax_hdl, S, 'N1', 'mdl_inds', P_in.mdl_inds, ...
                                    'rescale_parameters', P_in.rescale_parameters);
-    ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*1.1;%*0.82;
+    ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*0.82;
     ax_hdl.OuterPosition(4) = ax_hdl.OuterPosition(4)*0.9;
     %%
     k = k + 1;
@@ -56,7 +56,7 @@ function [] = sum_exp_trodes_plot_coef(S, varargin)
     ax_hdl=subplot(n_row,n_col, k);
     plot_multiple(ax_hdl, S, 'k', 'mdl_inds',  P_in.mdl_inds, ...
                                   'rescale_parameters', P_in.rescale_parameters);
-    ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*1.1;%*0.9;
+    ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*0.9;
     %%
     k = k + 1;
     ax_hdl=subplot(n_row,n_col, k);
@@ -68,7 +68,6 @@ function [] = sum_exp_trodes_plot_coef(S, varargin)
              'xtick', [1, 5, size(S.T_res,1)], ...
              'ylim', [LL_rng*max(S.T_res.err_norm), 0], ...
              'ticklabelinterpreter', 'latex')
-%     set(gca, 'ytick', [2.32, 2.44])
     y = S.T_res.err_norm * LL_rng;
     plot(6:numel(y), y(6:end),'o', 'Color', 0.6*[1,1,1], 'linewidth', 0.5)
     plot(1, y(1),'o', 'Color', [0.15, 0.15, 0.8], 'linewidth', 0.5, 'markerfacecolor', [0.15, 0.15, 0.8])
@@ -86,7 +85,7 @@ function [] = sum_exp_trodes_plot_coef(S, varargin)
     text(0.1,0.5, '$k=\beta_{AP}^{k}AP+$...', 'Fontsize', 14, 'interpreter', 'latex')
     %% Save
     for i = 1:numel(P.figure_image_format)
-        saveas(gcf, [P.plots_folder_path filesep 'figure2_mdl'], P.figure_image_format{i})
+        saveas(gcf, [P.plots_folder_path filesep 'figure4_mdl'], P.figure_image_format{i})
     end
 end
 %% plot_multiple
