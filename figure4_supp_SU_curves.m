@@ -23,4 +23,6 @@ for brain_area = P.brain_areas(:)'
              'FontSize', 18)
     if k < 11, xlabel(''); end
 end
-% saveas(gcf, [P.plots_folder_path, filesep 'figure4_supp_SU_curves'], 'svg')
+for i = 1:numel(P.figure_image_format)
+    saveas(gcf, [P.plots_folder_path filesep mfilename], P.figure_image_format{i})
+end

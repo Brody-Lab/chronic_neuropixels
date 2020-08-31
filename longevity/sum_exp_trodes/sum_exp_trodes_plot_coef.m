@@ -76,13 +76,6 @@ function [] = sum_exp_trodes_plot_coef(S, varargin)
     ylabel('Rel. LL', 'interpreter', 'latex')
     ax_hdl.OuterPosition(4) = ax_hdl.OuterPosition(4)*0.4;
     ax_hdl.OuterPosition(3) = ax_hdl.OuterPosition(3)*0.6;
-    %%
-    k = k + 1;
-    ax_hdl=subplot(n_row,n_col, k);
-    set(ax_hdl, P.axes_properties{:}, 'xtick', [], 'ytick', [])
-    text(0.1,0.9, '$N=N_{1}[\alpha e^{k_{fast}(t-1)}+(1-\alpha)e^{k_{slow}(t-1)}]e^{k}$', 'Fontsize', 14, 'interpreter', 'latex')
-    text(0.1,0.7, '$N_{1}=\beta_{0}^{N_{1}}+\beta_{AP}^{N_{1}}AP+$...', 'Fontsize', 14, 'interpreter', 'latex')
-    text(0.1,0.5, '$k=\beta_{AP}^{k}AP+$...', 'Fontsize', 14, 'interpreter', 'latex')
     %% Save
     for i = 1:numel(P.figure_image_format)
         saveas(gcf, [P.plots_folder_path filesep 'figure4_mdl'], P.figure_image_format{i})

@@ -28,7 +28,7 @@ if re_bootstrap
         assemble_exp_decay_data()
     end
 end
-load(P.exp_decay_data_path)
+load(P.sum_exp_data_path)
 %%
 make_exp_decay_figure(T_ed, 'metric', 'unit')
 make_exp_decay_figure(T_ed, 'metric', 'single_unit')

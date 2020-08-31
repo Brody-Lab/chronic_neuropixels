@@ -43,6 +43,10 @@
 %       A logical scalar specifying whether exclude animals implanted
 %       without a holder
 %
+%   exclude_multiunit
+%       A logical scalar indicating whether to exclude multiunits. Useful
+%       for examining Vpp's
+%
 %   EI_bin_edges
 %       If CONDITION_ON includes 'electode_index', then this increasing
 %       vector specifies the bin edges for binning electrode indices. An
@@ -81,8 +85,9 @@ addParameter(parseobj, 'EI_bin_edges', P.EI_bin_edges, ...
 addParameter(parseobj, 'ML_bin_edges', P.ML_bin_edges, ...
     @(x) validateattributes(x, {'numeric'}, {'increasing', 'vector'}))
 addParameter(parseobj, 'standardize_area_names', false, @(x) isscalar(x) && islogical(x))
-addParameter(parseobj, 'exclude_holderless', true, @(x) isscalar(x) && islogical(x))
 addParameter(parseobj, 'exclude_3A', false, @(x) isscalar(x) && islogical(x))
+addParameter(parseobj, 'exclude_holderless', true, @(x) isscalar(x) && islogical(x))
+addParameter(parseobj, 'exclude_multiunit', false, @(x) isscalar(x) && islogical(x))
 addParameter(parseobj, 'x0', min(P.longevity_time_bin_centers), @(x) isscalar(x) && isnumeric(x))
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
@@ -235,10 +240,14 @@ for i = 1:numel(Cells)
         else
             T.brain_area(k,1)="";
         end
+        if P_in.exclude_multiunit
+            idx_cells = idx_cells & Cells{i}.ks_good(:);
+        end
         T.unit(k,1) = sum(idx_cells);
         T.single_unit(k,1) = sum(Cells{i}.ks_good(idx_cells));
         T.event_rate(k,1) = nansum(Cells{i}.fr(idx_cells));
         T.Vpp(k,1) = nanmean(Cells{i}.unitVppRaw(idx_cells));
+        T.Vpp_distrib{k,1} = Cells{i}.unitVppRaw(idx_cells);
         T.n_elec(k,1) = sum(idx_trode);
         T.shank_plane(k,1) = string(Cells{i}.shank_plane);
         T.probe_serial(k,1) = str2double(Cells{i}.probe_serial);

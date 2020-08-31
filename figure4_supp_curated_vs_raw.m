@@ -1,4 +1,4 @@
-%figure 4 - supplement 6, comparing yield in curated versus uncurated data
+%figure 4 - figure supplement comparing yield in curated versus uncurated data
 % (in response to major comment 5)
 P=get_parameters;
 exclude_3A=true;
@@ -171,5 +171,5 @@ for i = 1:numel(label_hdl)
 end
 
 for i = 1:numel(P.figure_image_format)
-    saveas(gcf, [P.plots_folder_path filesep 'figure4_supplement6'], P.figure_image_format{i})
+    saveas(gcf, [P.plots_folder_path filesep mfilename], P.figure_image_format{i})
 end

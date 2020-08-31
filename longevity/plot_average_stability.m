@@ -17,6 +17,10 @@
 %       An AXES objects where the plot will be made. If empty(default),
 %       then a new figureis created.
 %
+%   color_order_offset
+%       An integer that shifts the color order specifying the color
+%       representing each group of sessions
+%
 %   FaceAlpha
 %       A scalar value between 0 and 1 that specifies the opacity of the
 %       shading that represent the standard error of mean. When a large
@@ -143,7 +147,7 @@ for i = 1:numel(unique(T.condition))
             x =x(~idx_nan);
             y=y(~idx_nan);
             p_hat = fit_sum_2_exp_decay(x,y, 'n_boot', 0, ...
-                                             'fit_initial_value', ~P_in.normalize_initial_value)
+                                             'fit_initial_value', ~P_in.normalize_initial_value);
             y_hat = sum_2_exp_decay(x,p_hat);
             if P_in.normalize_initial_value
                 y_hat = y_hat/mean((y_hat(x == P_in.x0)));

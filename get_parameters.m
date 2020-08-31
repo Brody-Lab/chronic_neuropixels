@@ -42,7 +42,6 @@ if ~isdir(P.data_folder_path)
 end
 P.choice_sel_mat_path = [P.data_folder_path filesep 'choice_modulation.mat'];
 P.Cells_path = [P.data_folder_path filesep 'Cells.mat'];
-P.exp_decay_data_path = [P.data_folder_path filesep 'exp_decay_data.mat'];
 P.sum_exp_data_path = [P.data_folder_path filesep 'sum_exp_data.mat'];
 P.curation_comparison_data_path = [P.data_folder_path filesep 'curation_comparison_data.mat'];
     
@@ -331,7 +330,7 @@ P.text.unit = 'Units';
 P.text.single_unit = 'Single units';
 P.text.frac_single = 'Fraction single units';
 P.text.event_rate = 'Event rate';
-P.text.Vpp = 'Peak-to-peak amplitude (uV)';
+P.text.Vpp = 'Peak-to-peak amplitude (\muV)';
 P.text.AP = 'AP';
 P.text.DV = 'DV';
 P.text.ML = 'ML';

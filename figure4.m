@@ -167,5 +167,3 @@ ax_hdl.OuterPosition(1) = ax_hdl.OuterPosition(1) + 0.03; % shift the plots righ
 for i = 1:numel(P.figure_image_format)
     saveas(gcf, [P.plots_folder_path filesep 'figure4'], P.figure_image_format{i})
 end
-%% Panels M,N,O,and P
-figure4_regression_mdl

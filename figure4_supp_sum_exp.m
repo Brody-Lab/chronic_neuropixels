@@ -1,5 +1,8 @@
-% FIGURE2_SUPP_SUM_EXP make the plots for a Figure 4--supplement that
-% provides details about the 
+% FIGURE4_SUPP_SUM_EXP make the plots for a Figure 4--figure supplement that
+% provides details about the sum-of-exponentials model fit to unit count in
+% in each session.
+%
+%   
 %
 % The model:
 %
@@ -16,21 +19,16 @@
 % The unit counts for each region are normalized by the average on the
 % first day after the surgery. This normalization removes one fewer
 % parameter to estimate. 
-%=OPTIONAL INPUT
-%
-%   1) re_bootstrap
-%       Recalculate the confidence intervals and probability values. 
-function [] = figure4_supp_sum_exp(varargin)
+function [] = figure4_supp_sum_exp()
+    add_folders_to_path
     P = get_parameters;
-    if nargin > 0 && varargin{1}
-        if exist('Cells', 'var')
-            assemble_exp_decay_data(Cells)
-        else
-            assemble_exp_decay_data()
-        end
-    else
-        load(P.sum_exp_data_path)
-    end
+    %% Panel A
+    load(P.Cells_path)
+    show_t_mdl_schematic(Cells)
+    
+    %% Panels B-C
+    load(P.sum_exp_data_path)
+    
     param_list = {'N1', 'alpha', 'kf', 'ks'};
     nparam=numel(param_list);
     figure('Pos', [100, 0, 1200, 1000])
