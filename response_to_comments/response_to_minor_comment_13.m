@@ -28,7 +28,7 @@ function response_to_minor_comment_13(varargin)
     h(1)=histogram(event_SNR(~multiple_probes_implanted & matching_bitscale),'NumBins',10,'Normalization','pdf','BinLimits',[0 17],'EdgeColor',[1 1 1]/2,'LineWidth',2,'FaceColor','b','FaceAlpha',0.2);hold on;
     h(2)=histogram(event_SNR(multiple_probes_implanted & matching_bitscale),'NumBins',10,'Normalization','pdf','BinLimits',[0 17],'EdgeColor',[1 1 1]/2,'LineWidth',2,'FaceColor','r','FaceAlpha',0.2);hold on;    
     set(gca,P.axes_properties{:},'box','off');
-    legend(h,{'single probe sessions','multi-probe sessions'});
+    legend(h,{sprintf('single-probe implants, n=%d',sum((~multiple_probes_implanted & matching_bitscale))),sprintf('multi-probe implants, n=%d',sum((multiple_probes_implanted & matching_bitscale)))});
     xlabel('Mean Event SNR');
     ylabel('Fraction of Sessions');
     fprintf('Mean event SNR across multi probe sessions is %g.\n',mean(event_SNR(multiple_probes_implanted & matching_bitscale)));
