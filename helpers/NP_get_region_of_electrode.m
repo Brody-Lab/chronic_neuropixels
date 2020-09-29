@@ -46,6 +46,10 @@ switch rat
         Region_from_tip_um.vStr = 137 + [0 2610];
         Region_from_tip_um.dStr = max(Region_from_tip_um.vStr) + [0 2710];
         Region_from_tip_um.M1 = max(Region_from_tip_um.dStr) + [0 2580];
+    case {'T240', 'T262'}
+        Region_from_tip_um.vStr = 137 + [0 3190.4];
+        Region_from_tip_um.dStr = max(Region_from_tip_um.vStr) + [0 2547];
+        Region_from_tip_um.M1 = max(Region_from_tip_um.dStr) + [0 2662.4];
     otherwise
         error('This rat has not been indicated to have a Neuropixels probe')
 end

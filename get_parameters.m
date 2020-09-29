@@ -44,7 +44,7 @@ P.choice_sel_mat_path = [P.data_folder_path filesep 'choice_modulation.mat'];
 P.Cells_path = [P.data_folder_path filesep 'Cells.mat'];
 P.sum_exp_data_path = [P.data_folder_path filesep 'sum_exp_data.mat'];
 P.curation_comparison_data_path = [P.data_folder_path filesep 'curation_comparison_data.mat'];
-    
+P.electrode_map_comparison_data_path = [P.data_folder_path filesep 'electrode_map_comparison_data.mat'];
 %% rats
 P.rats = [  "A230"
             "A241"

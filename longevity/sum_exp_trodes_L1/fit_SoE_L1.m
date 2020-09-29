@@ -25,8 +25,16 @@
 %       
 %=OPTIONAL INPUT, NAME-VALUE PAIRS
 %
+%   cvp
+%       CV partition
+%
 %   generate_data
 %       Make fake response data using the observed predictors
+%
+%   infer_betas
+%       A scalar toggle for whether to infer the model coefficients (as
+%       opposed to just returning the optimal lambda, in-sample LL, and
+%       out-of-sample LL)
 %
 %   KFold
 %       Number of cross-validation folds
@@ -49,7 +57,7 @@
 %
 %   lambda_ratio
 %       Ratio of smallest to largest lambda values (default: 1e-4). Lambda is the
-%       penalization paramter
+%       penalization paer_ramter
 %
 %   shuffle
 %       A logical scalar specifying whether to shuffle the rows for each
@@ -59,6 +67,7 @@ function S = fit_SoE_L1(Cells, varargin)
     P = get_parameters;
     parseobj = inputParser;
     addParameter(parseobj, 'cvp', [])
+    addParameter(parseobj, 'infer_betas', true, @(x) isscalar(x) && (x == 0 || x== 1))
     addParameter(parseobj, 'KFold', 2, ...
         @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer', 'nonzero'}))
     addParameter(parseobj, 'generate_data', false, @(x) x==0 || x==1)
@@ -179,62 +188,49 @@ function S = fit_SoE_L1(Cells, varargin)
         cvp = P_in.cvp;
     end
     betas_est_lambda = cell(n_mdl,1);
-    nLL_est_lambda = cell(n_mdl, 1);
+    LL_in_sample = cell(n_mdl, 1);
+    LL_per_trode = cell(n_mdl, 1);
     if isfield(SX, 'N1s')
-        parfor i = 1:n_mdl
-            % cross-validate
-            % To faciliate debugging, CROSSVAL is not used
-            betas_est_lambda{i} = nan(numel(b0), P_in.KFold);
-            nLL_est_lambda{i} = nan(1, P_in.KFold);
-            for k = 1:P_in.KFold
-                itrain = training(cvp,k);
-                itest = test(cvp,k);
-                fun = @(betas) calc_nLL(betas, XN1f(itrain,:), XN1s(itrain,:), Xk(itrain,:), t(itrain), y(itrain)) + ...
-                               lambda(i)*abs(betas)'*beta_weight;
-                btrain = fmincon(fun, b0, A, b, [], [], [], [], [], opts);
-                betas_est_lambda{i}(:,k) = btrain;
-                nLL_est_lambda{i}(k) = calc_nLL(btrain, XN1f(itest,:), XN1s(itest,:), Xk(itest,:), t(itest), y(itest));
-            end
-        end
+        bundled_inputs = {XN1f, XN1s, Xk, t, y};
     else
-        parfor i = 1:n_mdl
-            betas_est_lambda{i} = nan(numel(b0), P_in.KFold);
-            nLL_est_lambda{i} = nan(1, P_in.KFold);
-            for k = 1:P_in.KFold
-                itrain = training(cvp,k);
-                itest = test(cvp,k);
-                fun = @(betas) calc_nLL(betas, XN1(itrain,:), Xk(itrain,:), t(itrain), y(itrain)) + ...
-                               lambda(i)*abs(betas)'*beta_weight;
-                btrain = fmincon(fun, b0, A, b, [], [], [], [], [], opts);
-                betas_est_lambda{i}(:,k) = btrain;
-                nLL_est_lambda{i}(k) = calc_nLL(btrain, XN1(itest,:), Xk(itest,:), t(itest), y(itest));
-            end
-            
+        bundled_inputs = {XN1, Xk, t, y};
+    end
+    parfor i = 1:n_mdl
+        betas_est_lambda{i} = nan(numel(b0), P_in.KFold);
+        % To faciliate debugging during cross-validation, CROSSVAL is not used
+        for k = 1:P_in.KFold
+            itrain = training(cvp,k);
+            itest = test(cvp,k);
+            training_inputs = cellfun(@(x) x(itrain,:), bundled_inputs, 'uni', 0);
+            testing_inputs = cellfun(@(x) x(itest,:), bundled_inputs, 'uni', 0);
+            fun = @(betas) calc_nLL(betas, training_inputs{:}) + lambda(i)*abs(betas)'*beta_weight;
+            btrain = fmincon(fun, b0, A, b, [], [], [], [], [], opts);
+            betas_est_lambda{i}(:,k) = btrain;
+            % out of sample loglikelihood
+            LL_per_trode{i}(k) = calc_full_LL(P_in.noise, btrain, testing_inputs{:})/sum(itest);
+            % in-sample loglikliehood, including the constant term, for calculating BIC
+            LL_in_sample{i}(k,1) = calc_full_LL(P_in.noise, btrain, training_inputs{:});
         end
     end
-    
     % assemble a table including all the information for estimating lambda
     T_lambda.lambda = lambda(:);
-    T_lambda.LL_per_trode = cellfun(@(x) -1 * mean(x)/sum(i_est_lambda), nLL_est_lambda);
+    T_lambda.LL_per_trode = cellfun(@mean, LL_per_trode);
+        % the averaging is done across cv-folds
     assert(isreal(T_lambda.LL_per_trode))
-    if strcmp(P_in.noise, 'poisson')
-        T_lambda.LL_per_trode = T_lambda.LL_per_trode- mean(log(factorial(T_trode.unit)));
-    else
-        error('not yet implemented')
-    end 
-
+    T_lambda.LL_in_sample = cellfun(@mean, LL_in_sample);
     for i = 1:n_mdl
-        [~,idx] = min(abs(nLL_est_lambda{i}-median(nLL_est_lambda{i})));
+        [~,idx] = min(abs(LL_per_trode{i}-median(LL_per_trode{i})));
         T_lambda.betas(i,:) = betas_est_lambda{i}(:, idx)';
     end
     T_lambda = struct2table(T_lambda);
     S.T_lambda = T_lambda;
-    
-    % estimate the parameter coefficients
     [~,i_opt_lambda] = max(T_lambda.LL_per_trode);
     S.i_opt_lambda = i_opt_lambda;
-    
-    if ~isempty(P_in.T_trode) && ~isempty(P_in.i_est_lambda) && ~isempty(P_in.cvp)
+    % calculate BIC
+    ntrain = arrayfun(@(x) sum(training(cvp,x)), (1:P_in.KFold)');
+    S.BIC = mean(numel(b0)*log(ntrain) - 2*LL_in_sample{i_opt_lambda}); % averaging across folds
+    %% estimate the parameter coefficients
+    if ~P_in.infer_betas
         return
     end
     
@@ -264,6 +260,79 @@ function S = fit_SoE_L1(Cells, varargin)
         S.T_betas.Properties.VariableNames = ['kf', 'ks', 'N1f0', 'N1s0', P_in.model_parameters];
     else
         S.T_betas.Properties.VariableNames = ['kf', 'ks', 'a', 'N1', P_in.model_parameters];
+    end
+end
+%% CALC_FULL_LL
+%
+%   Calculate the summed loglikelhood including the constant terms
+%
+%=INPUT, Positional
+%
+%   1) noise
+%       A char array indicating whether the noise distribution is Poisson
+%       or Gaussian (either "Poisson" or "Gaussian", case-insensitive)
+%
+%   2-7) If there are seven inputs total, then they are assumed to be:
+%       2) b - coefficients
+%       3) XN1f - design matrix for regressors in the N1f term
+%       4) XN1s - design matrix for regressors in the N1s term
+%       5) Xk - design matrix for regressors in the k term
+%       6) t - a vector of days elapsed
+%       7) y - the response variable, a vector
+%
+%   2-6) If there are six inputs in total, then they are assumed to be:
+%       2) b - coefficients
+%       3) XN1 - design matrix for regressors in the N1 term
+%       4) Xk - design matrix for regressors in the k term
+%       5) t - a vector of days elapsed
+%       6) y - the response variable, a vector
+%
+%=OUTPUT
+%
+%   LL
+%       A scalar indicating the loglikelihood
+%
+%=EXAMPLE CALL
+%
+%   >>LL = calc_full_LL('poisson', b, XN1f, XN1s, Xk, t, y)
+%   >>LL = calc_full_LL('gaussian', b, XN1, Xk, t, y)
+function LL = calc_full_LL(noise, varargin)
+    assert(strcmpi(noise, 'poisson') || strcmpi(noise, 'gaussian'))
+    if numel(varargin) == 6
+        b = varargin{1};
+        XN1f = varargin{2};
+        XN1s = varargin{3};
+        Xk = varargin{4};
+        t = varargin{5};
+        y = varargin{6};
+        n = numel(t);
+        if strcmp(noise, 'poisson')
+            LL = -calc_nLL_poisson_N1f_N1s(b, XN1f, XN1s, Xk, t, y) - mean(log(factorial(y)));
+        else
+            yhat = calc_resp_var_N1f_N1s(b, XN1f, XN1s, Xk, t);
+            sigma2hat = 1/(-2) * sum((y - yhat).^2);
+            sq_err = calc_nLL_gaussian_N1f_N1s(b, XN1f, XN1s, Xk, t, y);
+            LL = -0.5*numel(t)*(log(sigma2hat) + log(2*pi)) - ...
+                 1/2/sigma2hat*sq_err;
+        end
+    elseif numel(varargin) == 5
+        b = varargin{1};
+        XN1 = varargin{2};
+        Xk = varargin{3};
+        t = varargin{4};
+        y = varargin{5};
+        n = numel(t);
+        if strcmp(noise, 'poisson')
+            LL = -calc_nLL_poisson_N1_a(b, XN1, Xk, t, y) - mean(log(factorial(y)));
+        else
+            yhat = calc_resp_var_N1_a(b, XN1, Xk, t);
+            sigma2hat = 1/(-2) * sum((y - yhat).^2);
+            sq_err = calc_nLL_gaussian_N1_a(b, XN1, Xk, t, y);
+            LL = -0.5*numel(t)*(log(sigma2hat) + log(2*pi)) - ...
+                 1/2/sigma2hat*sq_err;
+        end
+    else
+        error('Cannot parse inputs')
     end
 end
 %% GENERATE_RESPONSE_VAR
