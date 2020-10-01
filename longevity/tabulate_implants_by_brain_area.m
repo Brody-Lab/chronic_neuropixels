@@ -29,6 +29,9 @@ P = get_parameters;
 addParameter(parseobj, 'group_by_brain_area', true, @(x) isscalar(x) && islogical(x))
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
+if nargin < 1
+    load(P.Cells_path)
+end
 if ~isempty(P_in.group_by_brain_area)
     Cells = standardize_brain_area_names(Cells);
 end

@@ -41,9 +41,6 @@ T223,fiber,8/16/2019,,,CAMK2a-eNpHR3.0,admFC,left,bregma,4,-1,0,0,10,0,0,0,
 T223,fiber,8/16/2019,,,CAMK2a-eNpHR3.0,admFC,right,bregma,4,1,0,0,-10,0,0,0,
 T224,fiber,9/19/2019,,,CAMK2a-eNpHR3.0,adStr,left,bregma,2.4,-1,0,3.3,0,-15,0,0,
 T224,fiber,9/19/2019,,,CAMK2a-eNpHR3.0,adStr,right,bregma,2.4,1,0,3.3,0,-15,0,0,
-T227,fiber,9/20/2019,,,CAMK2a-eNpHR3.0,admFC,left,bregma,4,-1,0,0,10,0,0,0,
-T227,fiber,9/20/2019,,,CAMK2a-eNpHR3.0,admFC,right,bregma,4,1,0,0,-10,0,0,0,
-T227,Neuropixels_3B,1/31/2020,,18194823381,,Striatum_M1,left,bregma,-1,2.4,0,8.4,0,-15,0,0,0
 T238,fiber,9/22/2019,,,CAMK2a-eNpHR3.0,admFC,left,bregma,4,-1,0,0,10,0,0,0,
 T238,fiber,9/22/2019,,,CAMK2a-eNpHR3.0,admFC,right,bregma,4,1,0,0,-10,0,0,0,
 T219,Neuropixels_3B,11/17/2019,,18194824092,,Striatum_M1,left,bregma,1,-2.4,0,8,0,-15,0,0,0

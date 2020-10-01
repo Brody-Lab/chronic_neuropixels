@@ -29,7 +29,7 @@ if numel(i)~=1
 end
 
 color_order = get(0, 'DefaultAxesColorOrder');
-marker_order = {'o-', '*--', '^-.'};
+marker_order = {'o-', '*--', '^-.', 'd:'};
 
 ncolr = size(color_order,1);
 nmark = numel(marker_order);
@@ -39,6 +39,7 @@ marker_inds = repmat((1:nmark), 1, ncolr);
 
 % shuffle the combinations of color and marker
 inds = rot90(reshape(1:((ncolr+1)*(nmark)), ncolr+1, nmark));
+inds = [inds, inds(:,1)];
 inds(inds>ncolr*nmark)=[];
 
 color_inds = color_inds(inds);

@@ -11,6 +11,8 @@ function [] = tabulate_implants()
             continue
         end
         k = k + 1;
+        T.date_implanted(k,1) = datetime(penetrations(i).date_implanted, ...
+                                        'InputFormat', 'yyyy-MM-dd');
         T.rat(k,1) = string(penetrations(i).rat);
         T.probe_serial(k,1) = str2double(penetrations(i).serial);
         T.AP(k,1) = penetrations(i).craniotomy_AP;
@@ -22,8 +24,6 @@ function [] = tabulate_implants()
         T.angle_coronal_deg(k,1) = penetrations(i).angle.ML;
         T.angle_sagittal_deg(k,1) = penetrations(i).angle.AP;
         T.shank_plane_angle(k,1) = abs(90-penetrations(i).probe_orientation);
-        T.date_implanted(k,1) = datetime(penetrations(i).date_implanted, ...
-                                        'InputFormat', 'yyyy-MM-dd');
         T.age(k,1) = get_age_at_time_of_implant(T.rat(k), T.date_implanted(k));
     end
     %% Thomas's implants
@@ -59,7 +59,8 @@ function [] = tabulate_implants()
                           sum(T.probe_serial(i) == T.probe_serial & ...
                               T.date_implanted(i) > T.date_implanted);
     end
-    T = sortrows(T, {'AP', 'rat'}, 'descend');
+    T = sortrows(T, {'date_implanted'}, 'ascend');
+    T.date_implanted = string(datestr(T.date_implanted, 'mm/dd/yyyy'));
     T.implant_number = (1:size(T,1))';
     T = T(:, [end, 1:end-1]);
     writetable(T, P.implants_path);

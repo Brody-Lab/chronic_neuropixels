@@ -35,6 +35,7 @@ addParameter(parseobj, 'metric', 'single_unit', ...
     @(x) validateattributes(x, {'string', 'cell', 'char'}, {}))
 addParameter(parseobj, 'varying', 'marker', @(x) ismember(x, {'color', 'marker'}));
 addParameter(parseobj, 'ylabel_on', true, @(x) isscalar(x) && islogical(x));
+addParameter(parseobj, 'legend_on', true, @(x) isscalar(x) && islogical(x));
 parse(parseobj, varargin{:});
 P_in = parseobj.Results;
 assert(ismember(brain_area, {'vmFC', 'MCtx', 'vmStr'}))
