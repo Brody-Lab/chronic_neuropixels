@@ -21,16 +21,16 @@ switch brain_area
         str = 'Motor cortex';    
     case 'dmStr'
         str = 'Dorsomedial striatum';        
-    case 'vmStr'
-        str = 'Ventromedial striatum'; 
+    case 'NAc'
+        str = 'Nucleus accumbens'; 
     case 'piriform'
         str = 'Piriform areas';
     case 'S1'
         str = 'Primary somatosensory cortex';
     case 'lStr'
         str = 'Lateral striatum';
-    case 'pallidum'
-        str = 'Pallidum';
+    case 'ventral pallidum'
+        str = 'Ventral pallidum';
     case 'amygdala'
         str = 'Amygdaloid complex';
     case 'striatum tail'
@@ -43,6 +43,12 @@ switch brain_area
         str = 'Superior colliculus';
     case 'nIC'
         str = 'Posterior tectum';
+    case 'globus pallidus'
+        str = 'Globus pallidus';
+    case 'BNST'
+        str = 'Bed nucleus of the stria terminalis';  
+    case 'preoptic area'
+        str = 'Preoptic area';
     otherwise
         error('%s does not yet have a full description', char(brain_area))
 end

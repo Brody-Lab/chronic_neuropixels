@@ -26,13 +26,13 @@ for i = 1:numel(Cells)
             Cells{i}.region_names(Cells{i}.DV <= -2.4 & ...
                                   Cells{i}.DV >  -5) = "dmStr";
             Cells{i}.region_names(Cells{i}.DV <= -5 & ...
-                                  Cells{i}.ML <= 3.1) = "vmStr";
+                                  Cells{i}.ML <= 3.1) = "NAc";
             Cells{i}.region_names(Cells{i}.ML > 3.1) = "piriform";
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV >  -2.4) = "MCtx";
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -2.4 & ...
                                            Cells{i}.electrodes.DV >  -5) = "dmStr";
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -5 & ...
-                                           Cells{i}.electrodes.ML <= 3.1) = "vmStr";
+                                           Cells{i}.electrodes.ML <= 3.1) = "NAc";
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.ML >  3.1) = "piriform";
         case {'T176', 'T212', 'T224', 'T249'}
             Cells{i}.region_names(Cells{i}.region_names=="M2" | ...
@@ -48,22 +48,22 @@ for i = 1:numel(Cells)
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="M1") = "MCtx";
             Cells{i}.region_names(Cells{i}.region_names=="dStr") = "dmStr";
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="dStr") = "dmStr";
-            Cells{i}.region_names(Cells{i}.region_names=="vStr") = "vmStr";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="vStr") = "vmStr";
+            Cells{i}.region_names(Cells{i}.region_names=="vStr") = "NAc";
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="vStr") = "NAc";
         case 'T170'
             Cells{i}.region_names(Cells{i}.DV >   -1.6) = "dmFC";
             Cells{i}.region_names(Cells{i}.DV <=  -1.6) = "vmFC";
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV >   -1.6) = "dmFC";
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <=  -1.6) = "vmFC";
-        case 'K265'
+        case 'K265'    
             Cells{i}.region_names(Cells{i}.DV >  -2.4) = "MCtx";
             Cells{i}.region_names(Cells{i}.DV <= -2.4 & ...
                                   Cells{i}.DV >  -5) = "dmStr";
-            Cells{i}.region_names(Cells{i}.DV <= -5) = "vmStr";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -2.4) = "MCtx";
+            Cells{i}.region_names(Cells{i}.DV <= -5) = "NAc";
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV >  -2.4) = "MCtx";
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -2.4 & ...
-                                           Cells{i}.electrodes.DV >  -5) = "dmStr";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -5) = "vmStr";
+                                  Cells{i}.electrodes.DV >  -5) = "dmStr";
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -5) = "NAc";            
         case 'T179'
             Cells{i}.region_names(Cells{i}.region_names=="ECIC" | ...
                                   Cells{i}.region_names=="MiTG") = "nIC";
@@ -87,42 +87,19 @@ for i = 1:numel(Cells)
                                            Cells{i}.electrodes.brain_area=="iSC" | ...
                                            Cells{i}.electrodes.brain_area=="dSC") = "SC";
         case 'A230'
-            Cells{i}.region_names(Cells{i}.DV >  -2.6) = "S1";
-            Cells{i}.region_names(Cells{i}.DV <= -2.6) = "lStr";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV >= -2.6) = "S1";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV  < -2.6) = "lStr";
+            Cells{i}.region_names(Cells{i}.region_names=="DMS") = "dmStr";
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="DMS") = "dmStr";            
         case 'A241'
             if Cells{i}.probe_serial=="18194823302"
-                Cells{i}.region_names(Cells{i}.DV >  -2.6) = "S1";
-                Cells{i}.region_names(Cells{i}.DV <= -2.6 & ...
-                                      Cells{i}.DV >  -7.1) = "lStr";
-                Cells{i}.region_names(Cells{i}.DV <= -7.1 & ...
-                                      Cells{i}.DV >  -7.7) = "";
-                Cells{i}.region_names(Cells{i}.DV <= -7.7) = "amygdala";
-                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV >  -2.6) = "S1";
-                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -2.6 & ...
-                                               Cells{i}.electrodes.DV >  -7.1) = "lStr";
-                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -7.1 & ...
-                                               Cells{i}.electrodes.DV >  -7.7) = "";
-                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -7.7) = "amygdala";
+                Cells{i}.region_names(Cells{i}.region_names=="DMS") = "dmStr";   
+                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="DMS") = "dmStr";                            
             elseif Cells{i}.probe_serial=="18194823631"
-                Cells{i}.region_names(Cells{i}.DV >  -2.5) = "MCtx";
-                Cells{i}.region_names(Cells{i}.DV <= -2.5 & ...
-                                      Cells{i}.DV >  -5.3) = "dmStr";
-                Cells{i}.region_names(Cells{i}.DV <= -5.3 & ...
-                                      Cells{i}.DV >  -7.9) = "vmStr";
-                Cells{i}.region_names(Cells{i}.DV <= -7.9 & ...
-                                      Cells{i}.DV >  -8.4) = "pallidum";
-                Cells{i}.region_names(Cells{i}.DV <= -8.4) = "piriform";  
-                
-                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV >  -2.5) = "MCtx";
-                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -2.5 & ...
-                                               Cells{i}.electrodes.DV >  -5.3) = "dmStr";
-                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -5.3 & ...
-                                               Cells{i}.electrodes.DV >  -7.9) = "vmStr";
-                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -7.9 & ...
-                                               Cells{i}.electrodes.DV >  -8.4) = "pallidum";
-                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -8.4) = "piriform";  
+                Cells{i}.region_names(Cells{i}.region_names=="dorsomedial striatum") = "dmStr";   
+                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="dorsomedial striatum") = "dmStr";                            
+                Cells{i}.region_names(Cells{i}.region_names=="bed nucleus of the stria terminalis") = "BNST";     
+                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="bed nucleus of the stria terminalis") = "BNST";                            
+                Cells{i}.region_names(Cells{i}.region_names=="M1") = "MCtx";   
+                Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="M1") = "MCtx";                            
             else
                 error('Unknown probe serial number')
             end
@@ -130,28 +107,17 @@ for i = 1:numel(Cells)
             Cells{i}.region_names(Cells{i}.region_names=="lateral amygdala") = "amygdala";
             Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="lateral amygdala") = "amygdala";
         case 'A243'
-            Cells{i}.region_names(Cells{i}.DV >  -2.5) = "MCtx";
-            Cells{i}.region_names(Cells{i}.DV <= -2.5 & ...
-                                  Cells{i}.DV >  -5.3) = "dmStr";
-            Cells{i}.region_names(Cells{i}.DV <= -5.3 & ...
-                                  Cells{i}.DV >  -7.9) = "vmStr";
-            Cells{i}.region_names(Cells{i}.DV <= -7.9 & ...
-                                  Cells{i}.DV >  -8.4) = "pallidum";
-            Cells{i}.region_names(Cells{i}.DV <= -8.4) = "piriform";  
-
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV >  -2.5) = "MCtx";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -2.5 & ...
-                                           Cells{i}.electrodes.DV >  -5.3) = "dmStr";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -5.3 & ...
-                                           Cells{i}.electrodes.DV >  -7.9) = "vmStr";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -7.9 & ...
-                                           Cells{i}.electrodes.DV >  -8.4) = "pallidum";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -8.4) = "piriform";  
+            Cells{i}.region_names(Cells{i}.region_names=="dorsomedial striatum") = "dmStr";    
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="dorsomedial striatum") = "dmStr";       
+            Cells{i}.region_names(Cells{i}.region_names=="M1") = "MCtx";   
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="M1") = "MCtx";                
         case 'A249'
-            Cells{i}.region_names(Cells{i}.DV >  -5.3) = "dmStr";
-            Cells{i}.region_names(Cells{i}.DV <= -5.3) = "vmStr";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV >  -5.3) = "dmStr";
-            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV <= -5.3) = "vmStr";
+            Cells{i}.region_names(Cells{i}.region_names=="ADS") = "dmStr";  
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="ADS") = "dmStr";                                        
+            Cells{i}.region_names(Cells{i}.DV<-5.3) = "NAc";     
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.DV<-5.3) = "NAc";                           
+            Cells{i}.region_names(Cells{i}.region_names=="M2") = "MCtx";            
+            Cells{i}.electrodes.brain_area(Cells{i}.electrodes.brain_area=="M2") = "MCtx";                                        
         otherwise
             error('Unknown rat')
     end

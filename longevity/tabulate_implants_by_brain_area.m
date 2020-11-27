@@ -76,8 +76,16 @@ T_elec = structfun(@(x) vertcat(x{:}), T_elec, 'uni', 0);
 T_elec = struct2table(T_elec);
 T_elec.rat=categorical(T_elec.rat);
 T_elec.brain_area=categorical(T_elec.brain_area);
-T_elec = T_elec(ismember(T_elec.brain_area, categorical(P.brain_areas)), :);
-
+bad_idx = ~ismember(T_elec.brain_area, categorical(P.brain_areas));
+missing_idx = ismissing(T_elec.brain_area);
+if any(bad_idx & ~missing_idx)
+    warning('Some brain areas are not in the approved list in "get_parameters"');
+    fprintf('Unapproved brain area: %s\n',unique(T_elec.brain_area((bad_idx & ~missing_idx))))
+end
+if any(missing_idx)
+    warning('%g electodes have an undefined brain area.',sum(missing_idx));
+end
+T_elec = T_elec(~bad_idx, :);
 [G,ID] = findgroups(T_elec(:, {'rat', 'probe_serial', 'brain_area'}));
 T=struct;
 T.rat=categorical(ID.rat);
